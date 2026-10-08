@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>HRSC Creative Request</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a guided five-step request, one step on screen at a time, with a sticky progress rail and a fixed action bar. */
+:root{
+  --bg:#F6F4FA; --surface:#FFFFFF; --sunk:#EFEBF6; --fg:#1C1427; --muted:#655B74; --line:#DCD4E8;
+  --brand:#3D1063; --brand-ink:#FFFFFF; --magenta:#C2006A; --lime:#5F7A0E;
+  --ok:#2C7A38; --warn:#9A5600; --bad:#B4233A; --chip:#F2EDF9; --chip-on:#3D1063; --chip-on-ink:#FFFFFF;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif; --body:"Inter Tight","Helvetica Neue",Arial,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#130C1C; --surface:#1D1429; --sunk:#180F23; --fg:#F1ECF8; --muted:#A99CBD; --line:#34274A;
+  --brand:#B79CFF; --brand-ink:#1A0F2A; --magenta:#FF5FB0; --lime:#B6CD45;
+  --ok:#6FD27E; --warn:#F2B04B; --bad:#FF7A8E; --chip:#271B38; --chip-on:#B79CFF; --chip-on-ink:#1A0F2A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#130C1C; --surface:#1D1429; --sunk:#180F23; --fg:#F1ECF8; --muted:#A99CBD; --line:#34274A;
+  --brand:#B79CFF; --brand-ink:#1A0F2A; --magenta:#FF5FB0; --lime:#B6CD45;
+  --ok:#6FD27E; --warn:#F2B04B; --bad:#FF7A8E; --chip:#271B38; --chip-on:#B79CFF; --chip-on-ink:#1A0F2A; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg)}
+body{color:var(--fg);font:16px/1.5 var(--body);padding-inline:16px;padding-block:24px 120px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font:600 11px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--magenta)}
+h1{font:800 clamp(28px,6vw,40px)/1 var(--display);text-transform:uppercase;letter-spacing:-.01em;margin:0;color:var(--brand)}
+.lede{color:var(--muted);margin:0;max-width:60ch}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:flex;flex-direction:column;gap:8px}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.rail li{display:flex;flex-direction:column;gap:6px;font:600 11.5px/1.2 var(--body);color:var(--muted);min-width:0}
+.rail li::before{content:"";height:5px;border-radius:9px;background:var(--line)}
+.rail li.done::before{background:var(--lime)}
+.rail li.on{color:var(--fg)} .rail li.on::before{background:var(--brand)}
+.rail li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+section.step{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:20px}
+h2{font:800 22px/1.1 var(--display);text-transform:uppercase;margin:0}
+h3{font:700 12px/1.2 var(--body);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0}
+.sub{margin:-12px 0 0;color:var(--muted);font-size:14.5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+label,.lbl{font:600 14px/1.3 var(--body)}
+.req::after{content:" *";color:var(--magenta)}
+.hint{font-size:13px;color:var(--muted);line-height:1.4;font-weight:400}
+input[type=text],input[type=email],input[type=url],input[type=date],select,textarea{width:100%;font:16px/1.4 var(--body);color:var(--fg);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+textarea{resize:vertical;min-height:90px}
+#desc{min-height:170px;line-height:1.55}
+:focus-visible{outline:2px solid var(--magenta);outline-offset:2px}
+.invalid{border-color:var(--bad)!important}
+.err{font-size:13px;color:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{font:500 14px/1.2 var(--body);padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--chip);color:var(--fg);cursor:pointer;text-align:left}
+.chip:hover{border-color:var(--brand)}
+.chip[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-ink);border-color:var(--chip-on)}
+.chip.add::before{content:"+ ";font-weight:700}
+.stem{font:500 13px/1.2 var(--body);padding:7px 10px;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--fg);cursor:pointer}
+.stem.hit{border-style:solid;border-color:var(--ok);color:var(--ok)} .stem.hit::before{content:"✓ "}
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;gap:6px;text-align:left;padding:14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;font:inherit;min-width:0}
+.tile:hover{border-color:var(--brand)}
+.tile strong{font:700 15px/1.2 var(--body)}
+.tile .d{font-size:13px;color:var(--muted);line-height:1.35}
+.tile .lt{font:600 11px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--magenta);margin-top:auto;padding-top:4px}
+.tile[aria-pressed="true"]{border-color:var(--brand);background:var(--chip);box-shadow:inset 0 0 0 1.5px var(--brand)}
+.tile[aria-pressed="true"] strong::before{content:"✓ ";color:var(--brand)}
+.tile.unsure{border-style:dashed}
+.note{font-size:14px;color:var(--muted);background:var(--sunk);border-radius:10px;padding:11px 13px}
+.note.warn{color:var(--warn)} .note.ok{color:var(--ok)}
+.suggest{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:10px;border:1px dashed var(--brand)}
+/* request cards */
+.card{border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.card-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:14px 16px;background:var(--sunk);border-bottom:1px solid var(--line)}
+.card-head strong{font:800 16px/1.15 var(--display);text-transform:uppercase;flex:1 1 200px;min-width:0}
+.meter{display:flex;align-items:center;gap:8px}
+.meter .bar{width:90px;height:6px;border-radius:9px;background:var(--line);overflow:hidden}
+.meter .bar i{display:block;height:100%;width:0;background:var(--bad);transition:width .25s}
+.meter b{font:700 13px/1 var(--body);font-variant-numeric:tabular-nums;min-width:3.2em;text-align:right}
+.card-body{padding:16px;display:flex;flex-direction:column;gap:16px}
+.qs{display:flex;flex-direction:column;gap:16px}
+.q{display:flex;flex-direction:column;gap:7px;padding-left:12px;border-left:3px solid var(--line)}
+.q.need{border-left-color:var(--magenta)} .q.done{border-left-color:var(--ok)}
+.tag{font:700 10px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;padding:3px 6px;border-radius:4px;margin-left:6px;vertical-align:2px}
+.tag.auto{background:var(--chip);color:var(--brand);border:1px solid var(--line)}
+details.opt summary{cursor:pointer;font:600 14px/1.2 var(--body);color:var(--brand);padding:4px 0}
+details.opt[open] summary{margin-bottom:12px}
+/* review */
+.rv{display:flex;flex-direction:column;gap:12px}
+.rv-item{border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.rv-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rv-top strong{flex:1 1 200px;font:700 15px/1.2 var(--body)}
+.band{font:700 10.5px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;padding:4px 7px;border-radius:5px;border:1px solid currentColor}
+.band.ready{color:var(--ok)} .band.info{color:var(--warn)} .band.not{color:var(--bad)}
+.miss{margin:0;padding-left:18px;font-size:14px;color:var(--muted)}
+.miss button{font:inherit;color:var(--brand);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-align:left}
+.next{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:0;padding:0;list-style:none;counter-reset:n}
+.next li{counter-increment:n;background:var(--sunk);border-radius:10px;padding:12px;font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+.next li::before{content:counter(n);font:800 18px/1 var(--display);color:var(--magenta)}
+pre{margin:0;padding:14px;font:12.5px/1.55 var(--mono);white-space:pre-wrap;word-break:break-word;background:var(--sunk);border-radius:10px;max-height:340px;overflow:auto}
+/* action bar */
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+.actions .in{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.actions .msg{flex:1;font-size:13.5px;color:var(--muted);min-width:0}
+button.primary{font:700 16px/1 var(--body);background:var(--brand);color:var(--brand-ink);border:0;border-radius:11px;padding:14px 22px;cursor:pointer}
+button.primary:disabled{opacity:.55;cursor:default}
+button.ghost{font:600 15px/1 var(--body);background:transparent;color:var(--brand);border:1px solid var(--line);border-radius:11px;padding:13px 16px;cursor:pointer}
+button.link{font:600 14px/1 var(--body);background:none;border:0;color:var(--brand);cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px}
+.done-panel{text-align:left;display:flex;flex-direction:column;gap:14px}
+.ref{font:500 15px/1 var(--mono);background:var(--sunk);padding:8px 10px;border-radius:8px;align-self:flex-start}
+.dots::after{content:"";animation:dots 1.4s steps(4) infinite}@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+@media (prefers-reduced-motion:reduce){.dots::after{animation:none;content:"…"}.meter .bar i{transition:none}}
+@media (max-width:540px){section.step{padding:18px}.rail li span{font-size:10.5px}.actions .msg{display:none}}
+</style>
+
+<style>body{margin:0}img{max-width:100%}</style></head><body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Harrah's Resort SoCal · Advertising</span>
+    <h1>Creative Request</h1>
+    <p class="lede">Tell us what you need. We'll ask only for the details your project actually requires, then send it to the Advertising team.</p>
+  </header>
+
+  <nav class="rail" aria-label="Progress"><ol id="rail">
+    <li><span>You</span></li><li><span>What</span></li><li><span>About it</span></li><li><span>Specifics</span></li><li><span>Review</span></li>
+  </ol></nav>
+
+  <!-- 0 · YOU -->
+  <section class="step" data-step="0" aria-labelledby="h0">
+    <div class="note ok" id="updBanner" hidden></div>
+    <h2 id="h0">Who's asking?</h2>
+    <p class="sub">We'll use this to follow up and send your confirmation.</p>
+    <div class="grid">
+      <div class="field"><label class="req" for="r_name">Your name</label><input type="text" id="r_name" autocomplete="name"></div>
+      <div class="field"><label class="req" for="r_email">Work email</label><input type="email" id="r_email" autocomplete="email" placeholder="name@caesars.com"><span class="hint">Use your @caesars.com or @harrahs.com address.</span></div>
+      <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"><label for="r_website">Leave this empty</label><input type="text" id="r_website" tabindex="-1" autocomplete="off"></div>
+      <div class="field"><label class="req" for="r_dept">Department</label>
+        <select id="r_dept"><option value="">Choose…</option>
+          <option>Casino Marketing</option><option>Player Development</option><option>Food &amp; Beverage</option><option>Hotel</option>
+          <option>Entertainment &amp; Events</option><option>Public Relations &amp; Sponsorships</option><option>Human Resources / Team Members</option>
+          <option>Retail</option><option>Spa &amp; Pool</option><option>Advertising</option><option>Other</option></select></div>
+      <div class="field"><label for="r_approver">Who gives final approval?</label><input type="text" id="r_approver" placeholder="Name, if not you"><span class="hint">Leave blank if it's you.</span></div>
+    </div>
+    <label class="hint" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="remember" checked> Remember me on this device</label>
+  </section>
+
+  <!-- 1 · WHAT -->
+  <section class="step" data-step="1" hidden aria-labelledby="h1">
+    <h2 id="h1">What do you need?</h2>
+    <p class="sub">Pick everything that applies. Each one becomes its own request so the right people get it.</p>
+    <div class="tiles" id="tiles"></div>
+    <div class="note" id="leadNote">Lead times are the minimum. Earlier is always better.</div>
+  </section>
+
+  <!-- 2 · ABOUT -->
+  <section class="step" data-step="2" hidden aria-labelledby="h2">
+    <h2 id="h2">Tell us about it</h2>
+    <div class="grid">
+      <div class="field"><label class="req" for="r_project">Project or event name</label><input type="text" id="r_project" placeholder="e.g. Spiked Fall Cocktail Menu"></div>
+      <div class="field"><label class="req" for="r_live">When does it need to be live?</label><input type="date" id="r_live"><span class="hint" id="liveHint"></span></div>
+      <div class="field"><label for="r_aud">Who is it for?</label><select id="r_aud"><option value="">Choose…</option><option>Guests</option><option>Team Members</option><option>Guests and Team Members</option></select></div>
+    </div>
+    <div class="field">
+      <label class="req" for="desc">Describe your request</label>
+      <span class="hint">Tap a prompt to add a starter line. Green means you've already covered it.</span>
+      <div class="chips" id="stems"></div>
+      <textarea id="desc" placeholder="What's happening, what you need made, where it will appear, and anything it must say."></textarea>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="link" id="exampleBtn" type="button">See an example</button><span style="flex:1"></span><span class="hint" id="wc">0 words</span></div>
+    </div>
+    <div class="grid">
+      <div class="field"><label for="g_goal">What's the goal?</label><textarea id="g_goal" placeholder="e.g. Drive visits to Spiked in its first two weeks"></textarea></div>
+      <div class="field"><label for="g_succ">How will you know it worked?</label><textarea id="g_succ" placeholder="e.g. Bar covers up 10% vs. last October"></textarea></div>
+    </div>
+    <div class="field"><span class="lbl">Files you can send us</span><span class="hint">You'll get an upload link after you submit.</span><div class="chips" id="fileChips"></div></div>
+    <div class="suggest" id="suggest" hidden><span class="lbl">From your description, you might also need:</span><div class="chips" id="suggestChips"></div></div>
+  </section>
+
+  <!-- 3 · SPECIFICS -->
+  <section class="step" data-step="3" hidden aria-labelledby="h3s">
+    <h2 id="h3s">A few specifics</h2>
+    <p class="sub">These come straight from each request form. Pink means we still need it. Anything we picked up from your description is already filled in.</p>
+    <button class="ghost" id="aiFill" type="button" hidden>Fill in from my description with Claude</button>
+    <div id="aiStatus" class="hint" role="status"></div>
+    <div id="cards" class="qs"></div>
+  </section>
+
+  <!-- 4 · REVIEW -->
+  <section class="step" data-step="4" hidden aria-labelledby="h4">
+    <h2 id="h4">Review and send</h2>
+    <p class="sub">You can send now even if something's missing. We'll follow up on anything marked.</p>
+    <div class="rv" id="review"></div>
+    <h3>What happens next</h3>
+    <ol class="next">
+      <li><b>Logged</b>Your request is created in FunctionPoint as a draft, usually within 15 minutes.</li>
+      <li><b>Reviewed</b>Advertising checks scope and timing within 2 business days.</li>
+      <li><b>Questions</b>If anything is missing, we email you a short list.</li>
+      <li><b>Scheduled</b>You get a timeline and, for video or shoots, a kickoff.</li>
+    </ol>
+    <details class="opt"><summary>See exactly what we'll send</summary><pre id="preview"></pre></details>
+  </section>
+
+  <!-- DONE -->
+  <section class="step done-panel" data-step="5" hidden aria-labelledby="h5">
+    <h2 id="h5">Request sent</h2>
+    <p style="margin:0">Thanks. Your reference number is below. Keep it handy if you email us about this request.</p>
+    <span class="ref" id="refOut"></span>
+    <div class="note" id="doneNote"></div>
+    <a id="uploadLink" class="ghost" style="text-decoration:none;align-self:flex-start;display:inline-block" target="_blank" rel="noopener" hidden>Upload your files</a>
+    <div><button class="link" id="newReq" type="button">Start another request</button></div>
+  </section>
+
+  <section class="step" data-step="6" hidden aria-labelledby="h6">
+    <h2 id="h6">Copy your request</h2>
+    <p class="sub" id="copyWhy"></p>
+    <pre id="copyPre"></pre>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="primary" id="copyBtn" type="button">Copy</button><button class="ghost" id="copyBack" type="button">Back to review</button></div>
+  </section>
+</div>
+
+<div class="actions"><div class="in">
+  <button class="ghost" id="backBtn" type="button" hidden>Back</button>
+  <span class="msg" id="msg"></span>
+  <button class="primary" id="nextBtn" type="button">Next</button>
+</div></div>
+
+<script>
+/* ===== SETUP: fill these in when you host the page ===== */
+const CONFIG={
+  webhookUrl:"https://hooks.zapier.com/hooks/catch/29085885/41yn5au/",          // Zapier "Catch Hook" URL, e.g. https://hooks.zapier.com/hooks/catch/123/abc/
+  fileUploadUrl:"",       // Dropbox file request (or similar) link for attachments
+  contactEmail:"jbeltz@caesars.com",
+  emailDomains:["caesars.com","harrahs.com"],
+  holdBelow:60            // requests scoring under this wait for answers before they go into FunctionPoint
+};
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const SCREENS=["Marketing A B","Dura Loop (requires adv. approval)","In-Room Channel","Outside Marquee","iView Slot Machine Screens","Table Games Screens","High Limit Interior Screens"];
+const NEW_PIECE="Something new or different";
+const MENU_PIECES={"Banquets":[["Banquet menu (PDF)","Banquets (pdf)"]],"Best of Cluck":[["Counter decal","Best of Cluck Decal: 8.5(w)x11(h)"]],"Cafe":[["Menu board","Cafe: 11(w)x14(h)"]],
+ "Corner Counter":[["Counter menu","Corner Counter: 11(w) x 8.5(h)"]],
+ "Dive":[["Eats & Sips menu","Dive Eats & Sips: 8.5(w)x16.25(h)"],["Cabana menu","Dive Cabana: 5(w)x 7(h)"],["Snack Shack window","Dive Snack Shack Window"]],
+ "EDR":[["Menu board","EDR Menu Board"]],
+ "Earl of Sandwhich":[["Menu board","Earl of Sandwich Board: 30(w)x40(h)"],["Counter decal","Earl of Sandwich Decal: 13(w)x9.75(h)"],["Limited-time offer poster","Earl of Sandwich LTO: 30(w)x44.5(h)"]],
+ "Smashburger":[["Counter decal","Smashburger Decal: 5.625(w)x10(h)"],["Limited-time offer poster","Smashburger LTO: 30(w)x44.5(h)"]],
+ "Hell's Kitchen":[["Dinner menu","HK Dinner: 7(w)x11(h)"],["Vegan menu","HK Vegan: 7(w)x11(h)"],["Cocktail & wine list","HK Cocktail/Wine: 7(w)x8.5(h)"],["Dessert menu","HK Dessert: 7(w)x11(h)"],["Private dining menu","HK Private Dining: 14(w)x8(h)"]],
+ "Starbucks":[["Menu board","Starbucks 23(w)x28(h)"]],"Taco Truck":[["Truck menu","Taco Truck: 22(w)x32.5(h)"]],"Tierra y Mar":[["Table menu","Tierra y Mar: 8.5(w) x 11(h)"]],
+ "Easy Speak":[["Bar menu","Easy Speak: 4.25\"(w) x 11\"(h)"]]};
+function menuPieces(outlet){if(!outlet)return[];const p=MENU_PIECES[outlet]||[["Main menu",`Same size as the current ${outlet} menu`]];return[...p.map(x=>x[0]),NEW_PIECE];}
+function menuFp(plain,a){if(plain===NEW_PIECE)return"Other (new size, Advertising to confirm)";const p=(MENU_PIECES[a.outlet]||[]).find(x=>x[0]===plain);return p?p[1]:(plain==="Main menu"?`Same size as the current ${a.outlet} menu`:plain);}
+const PRINT_PIECES=[["Cubicle name plate",'9"(w) x 2"(h) - Cubicle Name Print'],["Office name plate",'8.5"(w) x 4"(h) - Office Name Print'],["Hotel key card insert",'3.15"(w) x 4.875"(h) - Hotel Key Card Insert'],
+ ["Small card",'3.5"(w) x 2"(h) - Small Card'],["Small flyer or counter sign",'4"(w) x 6"(h) - Flyer, Counter Sign, Insert'],["Rack card",'4"(w) x 9"(h) - Rack Card'],
+ ["Medium flyer or counter sign",'5"(w) x 7"(h) - Flyer, Counter Sign, Insert'],["Stanchion topper",'7"(w) x 11"(h) - Stanchion Topper'],["Large flyer or counter sign",'8.5"(w) x 11"(h) - Flyer, Counter Sign'],
+ ["Tri-fold brochure",'12"(w) x 9"(h) - 3-fold Brochure'],["Poster",'22"(w) x 28"(h) - Poster'],["Sandwich board",'22.7"(w) x 28.7"(h) - Sandwich Board'],["End bank sign",'22"(w) x 36"(h) - End Bank'],
+ ["Elevator dura",'25"(w) x 36.75"(h) - Elevator Dura'],["Outdoor windmaster",'30.25"(w) x 40.25"(h) - Outdoor Windmaster'],["Wall dura",'30.5"(w) x 42.25"(h) - Wall Dura'],
+ ["Small Mighty Stand",'24"(w) x 60"(h) Small Mighty Stand'],["Large Mighty Stand",'33.5"(w) x 78"(h) - Large Mighty Stand'],["Something else","Other - Please list in project description"]];
+const T=[
+ {id:27,name:"Social Video - Job Starter",code:"Soc",ae:"JB",min:null,live:"live",
+  use:"Social or short-form video, reels, cutdowns, B-roll, property-screen video",
+  kw:["video","reel","tiktok","b-roll","broll","footage","cutdown","clip","youtube","short-form","screens video"],
+  f:[["name","Project / Campaign Name","text",1],["concept","Campaign Overview / Concept","para",1],["live","Live Date","date",1],
+     ["platforms","Platform(s)","check",1,["Instagram","Facebook","Other"]],
+     ["dtype","Deliverable Type","drop",1,["Full Concept Video","Quick Turn / Announcement","Versioning / Cutdown","Edit Only (Existing Footage)","Repurposed Content"]],
+     ["priority","Priority","radio",0,["Standard","Rush","Critical"]],
+     ["refs","Visual References / Inspiration","para",0,null,"Paste links to reference material, mood boards, or inspiration."],
+     ["notes","Notes","para",0]]},
+ {id:13,name:"Photography/Video Request",code:"Photo",ae:"RL",min:21,live:"shoot",
+  use:"Photo or video coverage of an event or happening, shoot first and use later",
+  kw:["photo","photos","photography","photographer","coverage","cover the event","headshot","pictures","capture the event"],
+  f:[["support","Please select what support is needed?","check",1,["Photography","Video"]],
+     ["poc","Please provide an email address for the point of contact of this request?","email",1],
+     ["shoot","Shoot date you had in mind?","date",1,null,"This date can change depending on photographer availability."],
+     ["loc","Shoot location","preset",1,["Casino floor","Hotel lobby","Pool","Restaurant or bar","Event space","Off property"],"Pick one, or Other to name the exact spot."],
+     ["tStart","Start time","time",1],["tEnd","End time","time",1,null,"Your best estimate is fine."],
+     ["onsite","On-site contact name and cell","text",1,null,"Who our crew should find when they arrive."],
+     ["guests","Will guests be on camera?","radio",0,["Yes","No","Not sure"],"If yes, we'll bring release forms."],
+     ["vision","Project Description & Creative Vision for this shoot","para",1,null,"What is the final product and the goal? How will the images or video be used?"],
+     ["use","Where will the photo be used?","check",1,["Print Ad (i.e. Magazine, Brochure)","Print Collateral","Digital Ad (i.e. Web banner)","Public Relations (PR)","Social Media (i.e. Facebook, Instagram)","Website","Ticketmaster (600x160)","Other"]],
+     ["useOther","If other, please specify below?","para",0],
+     ["examples","Attached examples (if any)","file",0]]},
+ {id:17,name:"Digital Ads",code:"Dig",ae:"JG",min:14,live:"live",
+  use:"Paid digital ad sets: display banners, paid social ad sizes",
+  kw:["digital ad","banner ad","display ad","paid social","google ad","meta ad","programmatic","ad set","ads"],
+  f:[["summary","PROJECT SUMMARY","para",1,null,"Intro and goal. Which platform/channel? What stage of the funnel?"],
+     ["live","Live Date:","date",1],
+     ["kickoff","Does this job require a creative kick-off?","preset",0,["No","Yes, please schedule one","Yes, already scheduled"],"If it's already scheduled, pick Other and add the date."],
+     ["need","What is needed for this request.","check",1,["Copywriting (5 days)","Design (2 weeks)","Video (2 weeks)","Animation (2 weeks)"]],
+     ["copy","COPY DIRECTION:","para",1,null,"Copy points and mandatories: date, time, venue, mechanics, CTA, links."],
+     ["specs","AD SPECS NEEDED:","check",1,["160x600","300x250","300x600","320x50","728x90","1080x1080","1080x1920","1160x1280","1200x628","Other"]],
+     ["design","DIGITAL DESIGN:","para",0],["video","VIDEO DIRECTION:","para",0],["anim","ANIMATION DIRECTION:","para",0],
+     ["docs","Please attach supporting documents.","file",0]]},
+ {id:2,name:"Website",code:"Web",ae:"",min:21,live:"live",
+  use:"A single new landing page or adding a page to the site",
+  kw:["landing page","web page","webpage","microsite","new page"],
+  f:[["overview","Project overview and/or Description?","para",1,null,"Where should this page show (dining, rooms, resort)? What is the goal?"],
+     ["event","Date of Event","date",0],
+     ["message","What Message Do You Want to Convey?","para",1,null,"Copy points and mandatories: date, time, venue, mechanics, CTA, links."],
+     ["parent","Provide the link of the page that you want this page added to","url",1,null,"Example: https://www.harrahssocal.com/events/"],
+     ["tm","Please provide a Ticketmaster link or any link that will be used to route the guest to?","text",0],
+     ["sizes","Provide images sizes needed?","check",0,["300x168 (Corporate Tile)","640x320 (Corporate Header)","824x440 (Microsite Thumbail)","3840x1800 (Microsite Header)","1500x2200 (Microsite Mobile)","PDF (500kb no larger than 1MB)"]],
+     ["images","List out what image(s) you would like to use?","para",0],
+     ["live","When should this change go live to the public?","date",1],
+     ["down","What day should this come down?","date",0],
+     ["docs","Please attach supporting documents if you have any.","file",0]]},
+ {id:32,name:"Website & Digital Deployment",code:"Web",ae:"",min:null,live:"publish",
+  use:"Homepage features, module or banner updates, CTA/booking link updates, several web changes",
+  kw:["homepage","home page","module","banner update","booking link","cta","website update","update the website","web update","on the website","website"],
+  f:[["dname","Deliverable Name","text",1],
+     ["wtype","Web Work Type","drop",1,["New Landing Page","Module Update","Homepage Feature","Banner Update","CTA / Booking Link Update","Copy Update Only","Digital Ad","Other"]],
+     ["desc","Description","para",1],["publish","Publish Date","date",1],
+     ["assets","Assets Required Before Build?","check",0,["Copy","Video","Photography","Design Graphics","Legal Approval"]],
+     ["assetDue","Asset Delivery Due Date","date",0],
+     ["url","URL / Placement Location","text",1],
+     ["notes","Special Notes for Web Build","para",0]]},
+ {id:9,name:"Email Blast",code:"Eml",ae:"RL",min:14,live:null,
+  use:"A corporate email blast",
+  kw:["email","e-mail","eblast","e-blast","newsletter"],
+  f:[["desc","PROJECT DESCRIPTION","para",1,null,"What is the final product and where will it be used?"],
+     ["dm","If this is an email request is Direct Mail aware this email has been requested?","radio",1,["Yes","No"]],
+     ["assetsDue","When does corporate need all assets (copy & Images?","date",1],
+     ["message","What message do you want to convey?","para",1,null,"Copy points and mandatories: date, time, venue, mechanics, CTA, links."],
+     ["link","Please provide link to the website if applicable.","url",0],
+     ["size","Image size needed?","check",0,["600x400 - Email","600x600 - Email","Other"]],
+     ["sizeOther","If other size is needed, please specify?","text",0],
+     ["disc","Please provide approved Disclaimer to use.","para",1],
+     ["docs","Please attach supporting documents.","file",0]]},
+ {id:10,name:"Direct Mailer",code:"DM",ae:"RL",min:28,live:"vendorDue",
+  use:"Mail pieces: postcards, self-mailers, VIP invites, loyalty booklets",
+  kw:["mailer","postcard","direct mail","self-mailer","invite","invitation","loyalty booklet","mail piece"],
+  f:[["gl","GL#","text",1,null,"First four numbers of the department paying, e.g. 1700. We'll remember it for next time."],
+     ["vendorDue","When is this due to the vendor","date",1],
+     ["desc","Project Description","para",1],
+     ["applies","Please check all that apply","check",0,["Loyalty Booklet","Mail piece","Other"]],
+     ["versions","How many versions are we designing?","check",1,["Hotel Only","Non-Hotel","Hotel + Event Confirmation","Non-Hotel + Event Confirmation","Other"]],
+     ["versionsOther","Other (list all versions/combinations)","para",0],
+     ["digital","Digital Images Needed?","check",0,["Email","Kiosk Tiles","Website images"]],
+     ["offer","Does this include an offer?","check",0,["Free play variable","Coupon box","Hotel stay","Other"]],
+     ["offerOther","Other offer, please specify","text",0],
+     ["link","Booking Link","url",0,null,"A QR code will be generated from this link."],
+     ["code","Offer Code","text",0],
+     ["copy","Copy Details","para",1,null,"Copy points and mandatories: date, time, venue, CTA."],
+     ["disc","Disclaimers","para",1,null,"Complete disclaimer for each version, exactly as it should appear."],
+     ["files","Support files","file",0]]},
+ {id:14,name:"Logo design",code:"Logo",ae:"EA",min:21,live:"launch",
+  use:"A new logo for an event or promotion (Robyn or Amber must approve first)",
+  kw:["logo","wordmark","lockup"],
+  f:[["approved","Has this been approved by Robyn or Amber?","radio",1,["Yes","No"],"Logos need Robyn Lass or Amber Lussier's OK before you request one."],
+     ["lname","Logo Name","text",1,null,"Spell it exactly as it should appear."],
+     ["launch","What is the day that you plan on launching this logo?","date",1],
+     ["duration","How long will this logo be used?","preset",1,["One day","One week","One month","3 months","Ongoing"]],
+     ["tagline","Tagline Or Slogan","text",0],
+     ["details","Details of event/promotion?","para",1],
+     ["impact","Guest Impact of Logo","para",0,null,"Adjectives for the feeling the logo should give."],
+     ["colors","Color Preferences","text",0],["symbols","Symbols","text",0],
+     ["trends","Trends","para",0],["refs","Reference Styles","text",0]]},
+ {id:22,name:"Food Menu",code:"Menu",ae:"RL",min:28,live:"launch",
+  use:"A new or updated F&B menu, including its print, screen, web and QR versions",
+  kw:["menu","menus","drink list","cocktail list","wine list","menu board"],
+  f:[["gl","GL#","text",1,null,"First four numbers of the department paying, e.g. 1700. We'll remember it for next time."],
+     ["approver2","Does this project need to be approved by someone other than the person submitting? If so, provide name & email address.","text",1],
+     ["outlet","Which outlet will this menu be for","drop",1,["Banquets","Best of Cluck","Cafe","Corked","Corner Counter","Dive","Easy Speak","Earl of Sandwhich","EDR","Hell's Kitchen","Smashburger","Spiked","Starbucks","Taco Truck","Tierra y Mar","The First Down"]],
+     ["launch","Menu Launch Date?","date",1,null,"Book at least 4 weeks out."],
+     ["desc","Project Description","para",1],
+     ["updates","Menu updates (Word doc of items, descriptions, prices)","file",1],
+     ["areas","Areas of update needed?","check",1,["Design (Update menu)","Print (Menu size listed below)","Animation","Website","QR Code","OpenTable (3000x3000 px)"]],
+     ["size","Menu size","check",0,a=>menuPieces(a.outlet),"Pick the pieces you need. We already have the sizes on file.",a=>has(a.areas,"Print")],
+     ["qty","QUANTITY OF PRINTS NEEDED","preset",0,["25","50","100","250","500"],null,a=>has(a.areas,"Print")],
+     ["anim","ANIMATION: which TV screen should it run on?","preset",0,SCREENS,null,a=>has(a.areas,"Animation")],
+     ["web","WEBSITE: Provide a link of where you would like this menu show.","preset",0,["Replace the current menu on this outlet's page"],"Or pick Other and paste a link.",a=>has(a.areas,"Website")],
+     ["qr","QR Code","radio",0,["Update current QR","New QR code needed","Not needed"],null,a=>has(a.areas,"QR Code")],
+     ["qrUrl","If new QR code is needed, please provide a URL of where this QR will be linked.","url",0,null,null,a=>a.qr==="New QR code needed"],
+     ["disc","Please provide disclaimer","drop",0,["FOOD DISCLAIMER","DRINK DISCLAIMER"]],
+     ["discOther","If other, please specify?","para",0]]},
+ {id:24,name:"Hotel Package Request",code:"Hotel",ae:"RL",min:21,live:null,
+  use:"A hotel package offer and the marketing that supports it",
+  kw:["hotel package","room package","stay package","booking code","nights","staycation"],
+  f:[["support","What type of Marketing Support did you have in mind?","check",1,["Website","Print collateral","Animations (casino floor)","In room channel","Video","Social Media"]],
+     ["pname","Package Name","text",1],
+     ["copy","Copy point?","para",1,null,"Everything included in the package that should be on the booking site."],
+     ["room","Specify the room type?","text",1],["nights","How many nights are included in this offer?","preset",1,["1","2","3"]],
+     ["link","Provide Booking Link","url",1],["code","Provide Booking Code","text",1],
+     ["bdates","Booking Dates","text",1],["tdates","Travel Dates?","text",1],
+     ["disc","Do you have specific disclaimer verbiage or other restrictions that should be mentioned for this offer?","para",0],
+     ["files","File Upload (supporting documents)","file",0]]},
+ {id:26,name:"Marketing Support *NEW TEMPLATE",code:"Mkt",ae:"",min:21,live:"live",
+  use:"Print, signage, design, animation for floor screens, copywriting, or a mix of several disciplines",
+  kw:["flyer","poster","print","signage","sign","rack card","table tent","counter sign","dura","stanchion","animation","screens","marquee","kiosk","copywriting","copy only","brochure","collateral","design"],
+  f:[["gl","GL#","text",1,null,"First four numbers of the department paying, e.g. 1700. We'll remember it for next time."],
+     ["rush","Is this a rush request? (needed in 3 weeks or less)","radio",1,["Yes","No"],"We set this from your live date."],
+     ["audience","Which audience is this for?","check",1,["Guest","Team Members"]],
+     ["approver2","Does this project need to be approved by someone other than the person submitting? If so, provide name & email address.","text",1],
+     ["support","What marketing support will be needed?","check",1,["Copywriting","Design (creation or update)","Print","Animation","Website/Digital","Email or Direct Mail","Photography","Video","Social Media"]],
+     ["live","When do you need this to go live?","date",1],
+     ["down","When should marketing support come down?","date",0],
+     ["desc","Describe your project?","para",1,null,"Include date, time, location, prize, calls to action, disclaimer changes."],
+     ["dims","Dimensions: Width by Height","check",0,['9"(w) x 2"(h) - Cubicle Name Print','8.5"(w) x 4"(h) - Office Name Print','3.15"(w) x 4.875"(h) - Hotel Key Card Insert','3.5"(w) x 2"(h) - Small Card','4"(w) x 6"(h) - Flyer, Counter Sign, Insert','4"(w) x 9"(h) - Rack Card','5"(w) x 7"(h) - Flyer, Counter Sign, Insert','7"(w) x 11"(h) - Stanchion Topper','8.5"(w) x 11"(h) - Flyer, Counter Sign','12"(w) x 9"(h) - 3-fold Brochure','22"(w) x 28"(h) - Poster','22.7"(w) x 28.7"(h) - Sandwich Board','22"(w) x 36"(h) - End Bank','25"(w) x 36.75"(h) - Elevator Dura','30.25"(w) x 40.25"(h) - Outdoor Windmaster','30.5"(w) x 42.25"(h) - Wall Dura','24"(w) x 60"(h) Small Mighty Stand','33.5"(w) x 78"(h) - Large Mighty Stand','Other - Please list in project description'],null,a=>has(a.support,"Print")||has(a.support,"Design")],
+     ["qty","Please provide desired quantity for each printed piece","preset",0,["1","5","10","25","50","100","250","500"],"One quantity for everything, or pick Other to list each piece (e.g. Poster = 5, Flyer = 500).",a=>has(a.support,"Print")],
+     ["screens","What screens would you like this content be running on if animation is needed?","check",0,["Marketing A B","Dura Loop (requires adv. approval)","In-Room Channel","Outside Marquee","iView Slot Machine Screens","Table Games Screens","High Limit Interior Screens","Other - Please list in project description"],null,a=>has(a.support,"Animation")],
+     ["digital","Digital Needs","check",0,["Website","QR Code","Digital Ads","Promo Kiosk","QSR Kiosk","Ticketmaster (2426x1365)","Email (600x600 & 600x338)","Other"]],
+     ["digitalOther","If other, please list below","text",0],
+     ["webUrl","If this going on the web, please provide necessary URL.","url",0],
+     ["qrUrl","If yes, please provide a URL of where this QR will be linked.","url",0,null,null,a=>has(a.digital,"QR Code")],
+     ["disc","Disclaimer","drop",1,["STANDARD: Must be 21 or older to gamble.","Other - Please add in project details box","Not needed"]],
+     ["files","Attach any support files you may have.","file",0]]}
+];
+const byId=Object.fromEntries(T.map(t=>[t.id,t]));
+T.forEach(t=>{t.fields=t.f.map(([k,label,type,crit,opts,help,critIf])=>({k,label,type,crit:!!crit,opts:opts||null,help:help||"",critIf:critIf||null}));});
+(function(){const f22=byId[22].fields.find(f=>f.k==="size");f22.ask="Which menu pieces do you need?";f22.label="Please select the menu that you would like updated for your venue. If a new size is needed, select other and provide the desired size.";f22.fp=menuFp;
+ const f26=byId[26].fields.find(f=>f.k==="dims");f26.ask="Which printed pieces do you need?";f26.help="Pick what you need. We'll use our standard sizes.";f26.opts=PRINT_PIECES.map(x=>x[0]);f26.fp=v=>(PRINT_PIECES.find(x=>x[0]===v)||[0,v])[1];
+ const fld=(id,k)=>byId[id].fields.find(x=>x.k===k);const when=(id,k,fn)=>{fld(id,k).critIf=fn;};
+ fld(22,"disc").crit=true;fld(24,"disc").crit=true;
+ when(13,"useOther",a=>has(a.use,"Other"));when(9,"sizeOther",a=>has(a.size,"Other"));
+ when(10,"versionsOther",a=>has(a.versions,"Other"));when(10,"offerOther",a=>has(a.offer,"Other"));
+ when(10,"link",a=>has(a.offer,"Hotel stay"));when(10,"code",a=>has(a.offer,"Hotel stay"));
+ when(17,"design",a=>has(a.need,"Design"));when(17,"video",a=>has(a.need,"Video"));when(17,"anim",a=>has(a.need,"Animation"));
+ when(26,"digital",a=>has(a.support,"Website/Digital"));when(26,"digitalOther",a=>has(a.digital,"Other"));when(26,"webUrl",a=>has(a.digital,"Website"));
+ when(32,"assetDue",a=>Array.isArray(a.assets)&&a.assets.length>0);})();
+function has(v,s){return Array.isArray(v)&&v.some(x=>String(x).startsWith(s));}
+
+const tid=k=>k===131||k===132?13:k;
+const TILES=[
+ [27,"Social video","Reels, short videos, cutdowns, B-roll, video for property screens"],
+ [131,"Photography","Photos of an event, venue, food, people or product"],
+ [132,"Video coverage","Event video or B-roll we capture for later use"],
+ [26,"Print, signage & screens","Flyers, posters, duras, rack cards, floor-screen animation, copywriting"],
+ [22,"Food or drink menu","New or updated menu, plus its print, screen, web and QR versions"],
+ [17,"Digital ads","Paid display and social ad sets"],
+ [32,"Website update","Homepage features, banners, modules, booking links"],
+ [2,"New web page","A brand-new landing page"],
+ [9,"Email blast","Corporate email to guests"],
+ [10,"Direct mail","Postcards, self-mailers, VIP invites, loyalty booklets"],
+ [24,"Hotel package","A package offer and the marketing behind it"],
+ [14,"Logo","A new event or promo logo. Needs Robyn or Amber's OK first"]
+];
+const STEMS=[
+ ["What it is","What we need: ",/\b(need|want|looking for|request|create|make)\b/i],
+ ["Key dates","Key dates: ",/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d|\d{1,2}\/\d{1,2}|\b(today|tomorrow|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i],
+ ["Where it will appear","It will appear on: ",/\b(instagram|facebook|social|website|web|email|print|screens?|kiosk|in-room|lobby|signage|poster|flyer|menu)\b/i],
+ ["What it must say","Must-have copy: ",/\b(copy|says?|headline|tagline|cta|call to action|disclaimer|wording)\b/i],
+ ["Offer or prize","The offer is ",/\b(offer|prize|free ?play|discount|promo code|booking code|giveaway|\$\d)/i],
+ ["Shoot details","Shoot location and time: ",/\b(shoot|film|location|on site|on property)\b/i],
+ ["References","References I like: ",/\b(reference|inspiration|example|https?:\/\/)/i]
+];
+const FILES=["Approved copy","Menu items & prices","Logos or brand assets","Photos or footage","Disclaimer text","Booking link or promo code","Reference examples"];
+const EXAMPLE={project:"Spiked Fall Cocktail Menu",aud:"Guests",goal:"Drive visits to Spiked in the first two weeks of the new menu.",
+ desc:"Spiked is launching a new fall cocktail menu on October 30. We need new printed menus for the bar, a quick social video showing off the new drinks for Instagram, and the new menu on the Spiked page of the website. Final drink names and prices are in a Word doc. Use the standard drink disclaimer.",
+ tiles:[22,27],files:["Menu items & prices"]};
+
+const S={startedAt:Date.now(),step:0,tiles:new Set(),files:new Set(),routes:[],sample:null,sent:null};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+
+/* ---------- dates ---------- */
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const todayISO=()=>iso(new Date());
+function parseISO(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s||""))return null;const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);}
+function daysOut(s){const d=parseISO(s);return d?Math.round((d-parseISO(todayISO()))/864e5):null;}
+function bizDaysOut(s){const d=parseISO(s);if(!d)return null;let n=0;const c=parseISO(todayISO());while(c<d){c.setDate(c.getDate()+1);const w=c.getDay();if(w&&w<6)n++;}return n;}
+function usDate(s){const d=parseISO(s);return d?String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")+"/"+d.getFullYear():s;}
+function leadLabel(t){return t.min?`Book ${t.min/7} weeks ahead`:"Book 2 weeks ahead";}
+function addDays(n){const d=new Date();d.setDate(d.getDate()+n);return d;}
+
+/* ---------- shared ---------- */
+function sh(){return{name:$("#r_name").value.trim(),email:$("#r_email").value.trim(),dept:$("#r_dept").value,approver:$("#r_approver").value.trim(),
+ project:$("#r_project").value.trim(),live:$("#r_live").value,aud:$("#r_aud").value,desc:$("#desc").value.trim(),goal:$("#g_goal").value.trim(),success:$("#g_succ").value.trim()};}
+
+function chip(text,pressed,onClick,cls){const b=document.createElement("button");b.type="button";b.className="chip"+(cls?" "+cls:"");b.textContent=text;if(pressed!==null)b.setAttribute("aria-pressed",pressed?"true":"false");b.addEventListener("click",onClick);return b;}
+
+/* ---------- step 1 tiles ---------- */
+function renderTiles(){
+  const box=$("#tiles");box.innerHTML="";
+  TILES.forEach(([id,name,d])=>{const t=byId[tid(id)];const b=document.createElement("button");b.type="button";b.className="tile";b.setAttribute("aria-pressed",S.tiles.has(id));
+    b.innerHTML=`<strong>${esc(name)}</strong><span class="d">${esc(d)}</span><span class="lt">${leadLabel(t)}</span>`;
+    b.addEventListener("click",()=>{S.tiles.has(id)?S.tiles.delete(id):S.tiles.add(id);b.setAttribute("aria-pressed",S.tiles.has(id));S.tiles.delete(0);$("#unsureTile").setAttribute("aria-pressed","false");updateLeadNote();msg("");});
+    box.append(b);});
+  const u=document.createElement("button");u.type="button";u.className="tile unsure";u.id="unsureTile";u.setAttribute("aria-pressed",S.tiles.has(0));
+  u.innerHTML=`<strong>Not sure</strong><span class="d">Describe it on the next step and we'll match it for you</span>`;
+  u.addEventListener("click",()=>{const on=!S.tiles.has(0);if(on){S.tiles.add(0);}else S.tiles.delete(0);u.setAttribute("aria-pressed",on);updateLeadNote();msg("");});
+  box.append(u);updateLeadNote();
+}
+function maxLead(){let m=0;S.tiles.forEach(id=>{const t=byId[tid(id)];if(id&&t)m=Math.max(m,t.min||14);});return m;}
+function updateLeadNote(){const m=maxLead();$("#leadNote").textContent=m?`Based on what you picked, plan for at least ${m/7} weeks. That's ${usDate(iso(addDays(m)))} or later.`:"Lead times are the minimum. Earlier is always better.";}
+
+/* ---------- step 2 ---------- */
+function renderStems(){const st=$("#stems");st.innerHTML="";STEMS.forEach(([lab,stem])=>{const b=document.createElement("button");b.type="button";b.className="stem";b.textContent=lab;b.dataset.lab=lab;b.addEventListener("click",()=>{const ta=$("#desc");ta.value=ta.value+(ta.value.trim()&&!/\n$/.test(ta.value)?"\n":"")+stem;ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);onDesc();});st.append(b);});}
+function renderFiles(){const fc=$("#fileChips");fc.innerHTML="";FILES.forEach(f=>fc.append(chip(f,S.files.has(f),e=>{S.files.has(f)?S.files.delete(f):S.files.add(f);e.currentTarget.setAttribute("aria-pressed",S.files.has(f));})));}
+function onDesc(){
+  const v=$("#desc").value;const w=(v.trim().match(/\S+/g)||[]).length;$("#wc").textContent=w+" word"+(w===1?"":"s");
+  document.querySelectorAll("#stems .stem").forEach(b=>{const s=STEMS.find(x=>x[0]===b.dataset.lab);const stripped=v.split(s[1].trim()).join("");b.classList.toggle("hit",s[2].test(stripped));});
+  renderSuggest();
+}
+function keywordIds(text){
+  text=text.toLowerCase();const ids=new Set();T.forEach(t=>{if(t.kw.some(k=>text.includes(k)))ids.add(t.id);});
+  if(ids.has(22)){ids.delete(32);ids.delete(2);ids.delete(26);}
+  if(ids.has(2)&&ids.has(32))ids.delete(2);
+  return ids;
+}
+function renderSuggest(){
+  const txt=($("#desc").value+" "+$("#r_project").value).toLowerCase();
+  const ids=[...keywordIds(txt)].flatMap(id=>id!==13?[id]:[...(/photo|picture|headshot/.test(txt)?[131]:[]),...(/video|footage|film|b-roll|coverage/.test(txt)?[132]:[])]).filter(id=>!S.tiles.has(id)&&!(id===27&&false));
+  if(S.tiles.has(22))[32,2,26].forEach(x=>{const i=ids.indexOf(x);if(i>-1)ids.splice(i,1);});
+  const box=$("#suggestChips");box.innerHTML="";$("#suggest").hidden=!ids.length;
+  ids.forEach(id=>{const tl=TILES.find(x=>x[0]===id);box.append(chip(tl?tl[1]:byId[tid(id)].name,null,()=>{S.tiles.add(id);renderTiles();renderSuggest();},"add"));});
+}
+function liveHint(){const n=daysOut($("#r_live").value),m=maxLead(),el=$("#liveHint");if(n===null){el.textContent="";return;}
+  if(n<0){el.textContent="That date has passed.";el.style.color="var(--bad)";return;}
+  el.textContent=`${n} days from today`+(m&&n<m?`. That's short of the ${m/7}-week lead time, so it'll be flagged as a rush.`:".");el.style.color=m&&n<m?"var(--warn)":"var(--ok)";}
+
+/* ---------- routing & cards ---------- */
+function syncRoutes(){
+  let ids=[...new Set([...S.tiles].filter(Boolean).map(tid))];
+  if(S.tiles.has(0)||!ids.length){const k=[...keywordIds(sh().desc+" "+sh().project)];ids=[...new Set([...ids,...k])];if(!ids.length)ids=[26];}
+  const keep=S.routes.filter(r=>ids.includes(r.id));
+  ids.forEach(id=>{if(!keep.some(r=>r.id===id))keep.push({id,ans:{},auto:new Set()});});
+  S.routes=keep.sort((a,b)=>ids.indexOf(a.id)-ids.indexOf(b.id));
+  const cov=S.routes.find(r=>r.id===13);
+  if(cov){const sup=[...(S.tiles.has(131)?["Photography"]:[]),...(S.tiles.has(132)?["Video"]:[])];if(sup.length&&(cov.ans.support===undefined||cov.auto.has("support")||cov.preset)){cov.ans.support=sup;cov.auto.delete("support");cov.preset=true;}}
+  S.routes.forEach(extract);
+}
+function extract(r){ // light, local pickup of obvious answers from the description
+  const d=sh().desc.toLowerCase(),t=byId[r.id];const put=(k,v)=>{if(r.ans[k]===undefined||r.auto.has(k)){r.ans[k]=v;r.auto.add(k);}};
+  if(r.id===27){const p=[];if(/instagram|\big\b|reel/.test(d))p.push("Instagram");if(/facebook|\bfb\b/.test(d))p.push("Facebook");if(p.length)put("platforms",p);}
+  if(r.id===13){const tm=[...d.matchAll(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/g)].map(m=>String((+m[1]%12)+(m[3]==="pm"?12:0)).padStart(2,"0")+":"+(m[2]||"00"));if(tm[0])put("tStart",tm[0]);if(tm[1])put("tEnd",tm[1]);
+    const L=[["Casino floor",/casino floor|gaming floor/],["Hotel lobby",/lobby/],["Pool",/\bpool\b/],["Restaurant or bar",/restaurant|\bbar\b|spiked|corked|dive|hell's kitchen|tierra|easy speak|first down/],["Event space",/event (space|center)|ballroom|showroom/],["Off property",/off[- ]property|off[- ]site/]].find(x=>x[1].test(d));if(L)put("loc",L[0]);}
+  if(r.id===13){const p=[];if(/photo/.test(d))p.push("Photography");if(/video|footage|film/.test(d))p.push("Video");if(p.length)put("support",p);}
+  if(r.id===22){const o=t.fields.find(f=>f.k==="outlet").opts.find(o=>d.includes(o.toLowerCase()));if(o)put("outlet",o);
+    const a=[];if(/print/.test(d))a.push("Print (Menu size listed below)");if(/website|web page|online/.test(d))a.push("Website");if(/screen|animation/.test(d))a.push("Animation");if(/\bqr\b/.test(d))a.push("QR Code");if(a.length)put("areas",["Design (Update menu)",...a]);
+    if(/drink disclaimer|alcohol/.test(d))put("disc","DRINK DISCLAIMER");else if(/food disclaimer/.test(d))put("disc","FOOD DISCLAIMER");
+    if(S.files.has("Menu items & prices")||(/attach|word doc|sending/.test(d)&&/price|menu items|drink list/.test(d)))put("updates","Menu items & prices");
+    const q=d.match(/\b(\d{2,4})\s*(menus|copies|prints)\b/);if(q)put("qty",q[1]);}
+  if(r.id===17){const sz=(d.match(/\b\d{3,4}x\d{2,4}\b/g)||[]).filter(x=>t.fields.find(f=>f.k==="specs").opts.includes(x));if(sz.length)put("specs",sz);}
+  if(r.id===26){const sp=[];if(/print|flyer|poster|rack card|sign/.test(d))sp.push("Print");if(/design/.test(d)||sp.length)sp.unshift("Design (creation or update)");if(/animation|screen|marquee/.test(d))sp.push("Animation");if(/copy/.test(d))sp.push("Copywriting");if(sp.length)put("support",[...new Set(sp)]);
+    if(/gaming|slot|casino|free ?play|table game/.test(d))put("disc","STANDARD: Must be 21 or older to gamble.");}
+}
+function effAnswers(r){
+  const t=byId[r.id],s=sh(),a={...r.ans};
+  if(t.live&&!a[t.live]&&s.live)a[t.live]=s.live;
+  const DESC={27:"concept",13:"vision",17:"summary",2:"overview",32:"desc",9:"desc",10:"desc",14:"details",22:"desc",26:"desc"};
+  if(DESC[r.id]&&!a[DESC[r.id]]&&s.desc)a[DESC[r.id]]=s.desc;
+  if(r.id===27&&!a.name&&s.project)a.name=s.project;
+  if(r.id===27&&!a.priority&&s.live){const b=bizDaysOut(s.live);if(b!==null)a.priority=b<10?"Rush":"Standard";}
+  if(t.fields.some(f=>f.k==="gl")&&!a.gl&&s.dept){const g=store.get("hrsc_cr_gl_"+s.dept);if(g)a.gl=g;}
+  if(r.id===22&&a.outlet&&!filled({},a.size)&&has(a.areas,"Print")){const m=menuPieces(a.outlet).filter(x=>x!==NEW_PIECE);if(m.length===1)a.size=[m[0]];}
+  if(r.id===22&&!a.web&&has(a.areas,"Website"))a.web="Replace the current menu on this outlet's page";
+  if(r.id===32&&!a.dname&&s.project)a.dname=s.project;
+  if(r.id===24&&!a.pname&&s.project)a.pname=s.project;
+  if(r.id===13&&!a.poc&&s.email)a.poc=s.email;
+  if((r.id===22||r.id===26)&&!a.approver2)a.approver2=s.approver||(s.name?`No. ${s.name} (submitter) approves.`:"");
+  if(r.id===26){if(!a.audience&&s.aud)a.audience=s.aud==="Guests and Team Members"?["Guest","Team Members"]:s.aud==="Team Members"?["Team Members"]:["Guest"];const n=daysOut(a.live);if(n!==null)a.rush=n<=21?"Yes":"No";}
+  return a;
+}
+const liveFor=(r,a)=>{const t=byId[r.id];return (t.live&&a[t.live])||sh().live||"";};
+const isCrit=(f,a)=>f.crit||(f.critIf?!!f.critIf(a):false);
+const filled=(f,v)=>Array.isArray(v)?v.length>0:v!==undefined&&v!==null&&v!==false&&String(v).trim()!=="";
+function score(r){
+  const t=byId[r.id],a=effAnswers(r),s=sh();
+  const crit=t.fields.filter(f=>isCrit(f,a)),missing=crit.filter(f=>!filled(f,a[f.k]));
+  let p=crit.length?60*(crit.length-missing.length)/crit.length:60;
+  p+=(s.goal?5:0)+(s.success?5:0)+(s.aud?10:0)+((s.approver||s.name)?10:0);
+  const live=liveFor(r,a);let leadOk=false,lead=null;
+  if(live){const n=daysOut(live);if(t.min){lead={days:n,min:t.min};leadOk=n>=t.min;}else{const b=bizDaysOut(live);lead={days:n,biz:b,min:null};leadOk=b>=10;}}
+  p+=leadOk?10:0;const v=Math.round(p);
+  const flags=[];if(lead&&!leadOk)flags.push(t.min?`Rush: ${lead.days} days given, ${t.min} needed.`:`Rush: ${lead.biz} business days given, 10 needed.`);
+  if(r.id===14&&a.approved==="No")flags.push("Logos need Robyn or Amber's approval before we can start.");
+  const soft=[];if(!s.goal)soft.push("The goal");if(!s.success)soft.push("How you'll measure success");if(!s.aud)soft.push("Who it's for");
+  const band=v>=80&&!missing.length?"ready":v>=60?"info":"not";
+  return{v,band,bandText:band==="ready"?"Ready":v>=80?"Almost ready":band==="info"?"Needs info":"Not ready",missing,soft,flags,a,lead,leadOk,live};
+}
+const plain=t=>{if(t.id===13){const p=S.tiles.has(131),v=S.tiles.has(132);return p&&v?"Photo & video coverage":v?"Video coverage":"Photography";}const tl=TILES.find(x=>x[0]===t.id);return tl?tl[1]:t.name;};
+function renderCards(){
+  const box=$("#cards");box.innerHTML="";
+  S.routes.forEach((r,i)=>{
+    const t=byId[r.id],a=effAnswers(r);const el=document.createElement("div");el.className="card";el.dataset.i=i;
+    el.innerHTML=`<div class="card-head"><strong>${esc(plain(t))}</strong><div class="meter" title="How ready this request is"><div class="bar"><i></i></div><b>0%</b></div></div>
+     <div class="card-body"><div class="note warn flags" hidden></div><div class="qs need-qs"></div><details class="opt"><summary>More details (optional)</summary><div class="qs opt-qs"></div></details></div>`;
+    t.fields.forEach(f=>el.querySelector(isCrit(f,a)?".need-qs":".opt-qs").append(question(r,f,a)));
+    if([...el.querySelectorAll(".opt-qs .q")].some(q=>filled(t.fields.find(f=>f.k===q.dataset.k),a[q.dataset.k])))el.querySelector("details").open=true;
+    box.append(el);
+  });
+  refresh();
+}
+function question(r,f,a){
+  const t=byId[r.id],id=`q_${t.id}_${f.k}`,q=document.createElement("div");q.className="q";q.dataset.k=f.k;
+  const auto=r.id===26&&f.k==="rush";
+  const derived=!r.auto.has(f.k)&&r.ans[f.k]===undefined&&filled(f,a[f.k]);
+  q.innerHTML=`<div class="lbl"><label for="${id}">${esc(f.ask||f.label)}</label>${r.auto.has(f.k)?'<span class="tag auto">From your description</span>':derived?'<span class="tag auto">Filled in for you</span>':""}</div>${f.help?`<span class="hint">${esc(f.help)}</span>`:""}`;
+  const v=a[f.k];const set=val=>{r.ans[f.k]=val;r.auto.delete(f.k);q.querySelector(".tag.auto")?.remove();
+    if(f.k==="gl"&&sh().dept&&/^\d{3,}/.test(String(val).trim()))store.set("hrsc_cr_gl_"+sh().dept,String(val).trim());
+    if(f.k==="outlet"){delete r.ans.size;setTimeout(renderCards,0);return;}
+    refresh();};
+  if(f.type==="preset"){
+    const opts=typeof f.opts==="function"?f.opts(a):f.opts;const w=document.createElement("div");w.className="chips";w.id=id;w.setAttribute("role","group");
+    const other=document.createElement("input");other.type="text";other.placeholder="Type it here";other.setAttribute("aria-label",f.label+" (other)");
+    const isOther=filled(f,v)&&!opts.includes(v);other.hidden=!isOther;other.value=isOther?v:"";
+    const sync=cur=>w.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.o==="__other"?String(!other.hidden):String(c.dataset.o===cur)));
+    opts.forEach(o=>{const b=chip(o,v===o,()=>{const cur=effAnswers(r)[f.k]===o?"":o;other.hidden=true;set(cur);sync(cur);});b.dataset.o=o;if(/^Pick the outlet/.test(o))b.disabled=true;w.append(b);});
+    const ob=chip("Other…",isOther,()=>{other.hidden=false;other.focus();set(other.value);sync(null);});ob.dataset.o="__other";w.append(ob);
+    other.addEventListener("input",()=>set(other.value));
+    q.append(w,other);return q;
+  }
+  if(f.type==="check"||f.type==="radio"||(f.type==="drop"&&f.opts.length<=8)){
+    const w=document.createElement("div");w.className="chips";w.id=id;w.setAttribute("role","group");const multi=f.type==="check";
+    const opts=typeof f.opts==="function"?f.opts(a):f.opts;
+    opts.forEach(o=>{const on=multi?(Array.isArray(v)&&v.includes(o)):v===o;
+      const b=chip(o,on,()=>{if(auto)return;let cur=r.ans[f.k]??effAnswers(r)[f.k];
+        if(multi){cur=Array.isArray(cur)?[...cur]:[];cur=cur.includes(o)?cur.filter(x=>x!==o):[...cur,o];}else cur=cur===o?"":o;
+        set(cur);w.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",multi?cur.includes(c.textContent):cur===c.textContent));});
+      if(auto)b.disabled=true;w.append(b);});
+    if(auto){const h=document.createElement("span");h.className="hint";h.textContent="Set automatically from your live date.";q.append(h);}
+    q.append(w);
+  }else if(f.type==="drop"){const s=document.createElement("select");s.id=id;s.innerHTML='<option value="">Choose…</option>'+f.opts.map(o=>`<option${o===v?" selected":""}>${esc(o)}</option>`).join("");s.addEventListener("change",()=>set(s.value));q.append(s);}
+  else if(f.type==="file"){const i=document.createElement("input");i.type="text";i.id=id;i.placeholder="What will you send? You'll get an upload link after submitting.";i.value=typeof v==="string"?v:"";i.addEventListener("input",()=>set(i.value));q.append(i);}
+  else{const i=document.createElement(f.type==="para"?"textarea":"input");if(f.type!=="para")i.type={date:"date",email:"email",url:"url",time:"time"}[f.type]||"text";i.id=id;i.value=v||"";if(f.type==="url")i.placeholder="https://";i.addEventListener("input",()=>set(i.value));q.append(i);}
+  return q;
+}
+function refresh(){
+  document.querySelectorAll("#cards .card").forEach(el=>{const r=S.routes[+el.dataset.i];if(!r)return;const s=score(r),t=byId[r.id];
+    const bar=el.querySelector(".bar i");bar.style.width=s.v+"%";bar.style.background=s.band==="ready"?"var(--ok)":s.band==="info"?"var(--warn)":"var(--bad)";el.querySelector(".meter b").textContent=s.v+"%";
+    const fl=el.querySelector(".flags");fl.hidden=!s.flags.length;fl.textContent=s.flags.join(" ");
+    t.fields.forEach(f=>{const q=el.querySelector(`.q[data-k="${f.k}"]`);if(!q)return;const c=isCrit(f,s.a),ok=filled(f,s.a[f.k]);q.classList.toggle("need",c&&!ok);q.classList.toggle("done",c&&ok);
+      if(f.critIf){const dest=el.querySelector(c?".need-qs":".opt-qs");if(q.parentElement!==dest)dest.append(q);}
+      if(r.id===26&&f.k==="rush")q.querySelectorAll(".chip").forEach(ch=>ch.setAttribute("aria-pressed",ch.textContent===s.a.rush));});
+  });
+}
+
+/* ---------- payload ---------- */
+const yy=()=>String(new Date().getFullYear()).slice(2);
+const briefName=t=>`Adv_${t.code}-${yy()}_${sh().project||"Untitled"}`;
+const fmt=(f,v,a)=>{if(f.fp)v=Array.isArray(v)?v.map(x=>f.fp(x,a||{})):f.fp(v,a||{});if(f.type==="time"&&/^\d{2}:\d{2}/.test(v)){const [H,M]=v.split(":").map(Number);v=`${(H%12)||12}:${String(M).padStart(2,"0")} ${H<12?"AM":"PM"}`;}return Array.isArray(v)?v.join(", "):f.type==="date"?usDate(v):String(v);};
+function buildPayload(ref){
+  const s=sh();const names=S.routes.map(r=>briefName(byId[r.id]));
+  const briefs=S.routes.map((r,i)=>{const t=byId[r.id],sc=score(r),a=sc.a;
+    const answers=t.fields.filter(f=>filled(f,a[f.k])||isCrit(f,a)).map(f=>({question:f.label,answer:filled(f,a[f.k])?fmt(f,a[f.k],a):"MISSING",required:isCrit(f,a)}));
+    const others=names.filter((_,j)=>j!==i);
+    const head=[`${names[i]}`,`Request template: ${t.name} (#${t.id})`,`Readiness: ${sc.v}/100 · ${sc.bandText}`,...sc.flags.map(x=>"⚠ "+x),"",
+      `Requested by: ${s.name} (${s.dept}) · ${s.email}`,`Approver: ${s.approver||s.name+" (submitter)"}`,`Audience: ${s.aud||"MISSING"}`,`Goal: ${s.goal||"MISSING"}`,`Success measure: ${s.success||"MISSING"}`,
+      S.files.size?`Files coming: ${[...S.files].join(", ")}`:"",others.length?`Related requests: ${others.join("; ")}`:"","","PAGE 1"].filter((x,k,arr)=>x!==""||arr[k-1]!=="");
+    const text=head.concat(answers.map(x=>`${x.question}: ${x.answer}`)).join("\n");
+    return{template_id:t.id,template_name:t.name,brief_name:names[i],ae:t.ae||"JB",delivery_date:sc.live?usDate(sc.live):"",delivery_date_iso:sc.live||"",
+      readiness:sc.v,readiness_band:sc.bandText,rush:!sc.leadOk&&!!sc.live,lead_days:sc.lead?sc.lead.days:null,lead_min_days:t.min,
+      flags:sc.flags,missing:sc.missing.map(f=>f.label),answers,answers_text:answers.map(x=>`${x.question}: ${x.answer}`).join("\n"),brief_text:text,
+      description:`${s.desc}${others.length?"\n\nRelated requests: "+others.join("; "):""}`};});
+  const allMissing=[...new Set([...briefs.flatMap(b=>b.missing.map(m=>`${plainName(b.template_id)}: ${m}`)),...(briefs.length?score(S.routes[0]).soft:[])])];
+  return{ref,update_of:S.updateOf||null,hold_below:CONFIG.holdBelow,submitted_at:new Date().toISOString(),source:"hrsc-creative-request v3",
+    requester:{name:s.name,email:s.email,department:s.dept,approver:s.approver||s.name},
+    project:{name:s.project,live_date:s.live?usDate(s.live):"",live_date_iso:s.live,audience:s.aud,goal:s.goal,success_measure:s.success,description:s.desc,files_coming:[...S.files]},
+    brief_count:briefs.length,lowest_readiness:Math.min(...briefs.map(b=>b.readiness)),any_rush:briefs.some(b=>b.rush),
+    briefs,all_missing:allMissing,summary_text:briefs.map(b=>b.brief_text).join("\n\n────────\n\n")};
+}
+const plainName=id=>plain(byId[id]);
+function makeRef(){const d=new Date();return "REQ-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase();}
+
+/* ---------- review ---------- */
+function renderReview(){
+  const box=$("#review");box.innerHTML="";
+  S.routes.forEach((r,i)=>{const t=byId[r.id],s=score(r);const el=document.createElement("div");el.className="rv-item";
+    el.innerHTML=`<div class="rv-top"><strong>${esc(plain(t))}</strong><span class="band ${s.band}">${s.v}% · ${s.bandText}</span></div>
+      <span class="hint">${esc(briefName(t))} · due ${s.live?usDate(s.live):"date not set"}</span>${s.flags.map(x=>`<div class="note warn">${esc(x)}</div>`).join("")}`;
+    if(s.missing.length){const ul=document.createElement("ul");ul.className="miss";s.missing.forEach(f=>{const li=document.createElement("li");const b=document.createElement("button");b.type="button";b.textContent=f.label;b.addEventListener("click",()=>{go(3);setTimeout(()=>{const n=document.getElementById(`q_${t.id}_${f.k}`);if(n){n.scrollIntoView({block:"center"});(n.querySelector?.("button")||n).focus?.();}},50);});li.append("Missing: ",b);ul.append(li);});el.append(ul);}
+    box.append(el);});
+  $("#preview").textContent=buildPayload("(assigned when sent)").summary_text;
+}
+
+/* ---------- send ---------- */
+async function send(){
+  const ref=S.updateOf||makeRef();const payload=buildPayload(ref);S.sent=payload;
+  if(!CONFIG.webhookUrl){showCopy(payload,"Sending isn't switched on for this copy of the form. Copy your request and email it to "+CONFIG.contactEmail+".");return;}
+  const btn=$("#nextBtn");btn.disabled=true;msg('<span class="dots">Sending</span>',true);
+  if($("#r_website").value.trim()){S.sent=payload;$("#refOut").textContent=ref;$("#doneNote").textContent="Thanks.";go(5);return;}  // bot trap: pretend success, send nothing
+  payload.form_started_ms=S.startedAt?Date.now()-S.startedAt:null;
+  const body=JSON.stringify(payload);let ok=false;
+  try{const res=await fetch(CONFIG.webhookUrl,{method:"POST",body});ok=res.ok;}
+  catch(e){try{await fetch(CONFIG.webhookUrl,{method:"POST",body,mode:"no-cors"});ok=true;}catch(e2){ok=false;}}
+  btn.disabled=false;msg("");
+  if(!ok){showCopy(payload,"We couldn't reach the Advertising inbox. Copy your request and email it to "+CONFIG.contactEmail+".");return;}
+  $("#refOut").textContent=ref;
+  $("#doneNote").textContent=`A confirmation is on its way to ${payload.requester.email}.`+(payload.all_missing.length?` We'll follow up on ${payload.all_missing.length} open item${payload.all_missing.length>1?"s":""}.`:"");
+  const up=$("#uploadLink");if(CONFIG.fileUploadUrl&&S.files.size){up.href=CONFIG.fileUploadUrl;up.hidden=false;}else up.hidden=true;
+  const held=payload.briefs.filter(b=>b.readiness<CONFIG.holdBelow);
+  if(held.length)$("#doneNote").textContent=`A confirmation is on its way to ${payload.requester.email}. ${held.length===payload.briefs.length?"We need":"Part of this needs"} a few answers before we can log ${held.length===payload.briefs.length?"it":"that part"}. The email has a link to update this request.`;
+  saveDraft();store.set("hrsc_cr_sent_"+ref,JSON.stringify({draft:store.get("hrsc_cr_draft"),routes:S.routes.map(r=>({id:r.id,ans:r.ans}))}));
+  store.del("hrsc_cr_draft");go(5);
+}
+function showCopy(payload,why){
+  const text=`Creative request ${payload.ref}\n\n${payload.summary_text}`;$("#copyWhy").textContent=why;$("#copyPre").textContent=text;
+  $("#copyBtn").onclick=()=>{const done=()=>{$("#copyBtn").textContent="Copied";setTimeout(()=>$("#copyBtn").textContent="Copy",1400);};
+    try{navigator.clipboard.writeText(text).then(done,sel);}catch(e){sel();}
+    function sel(){const r=document.createRange();r.selectNodeContents($("#copyPre"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("#copyBtn").textContent="Selected. Press Ctrl+C";}};
+  go(6);
+}
+
+/* ---------- Claude assist (only where Claude is available, e.g. the internal preview) ---------- */
+async function aiFill(){
+  if(!S.sample)return;const s=sh();const b=$("#aiFill");b.disabled=true;$("#aiStatus").innerHTML='<span class="dots">Reading your description</span>';
+  const schema=S.routes.map(r=>{const t=byId[r.id];return "#"+t.id+" "+t.name+": "+t.fields.filter(f=>f.type!=="file").map(f=>f.k+"("+f.type+(f.opts?": "+(typeof f.opts==="function"?f.opts(effAnswers(r)):f.opts).join(" | "):"")+") = "+f.label).join("; ");}).join("\n");
+  const prompt=`Fill FunctionPoint request-form fields ONLY from what this description states or clearly implies. Never invent dates, names, GL numbers, URLs, codes, sizes, quantities, disclaimers or copy. For check fields return an array of options copied exactly; for radio/drop one exact option; dates as YYYY-MM-DD (today is ${todayISO()}). Leave out anything unknown.\n\nPROJECT: ${s.project}\nLIVE DATE: ${s.live}\nDESCRIPTION:\n"""${s.desc.slice(0,6000)}"""\n\nFORMS:\n${schema}\n\nReply with only JSON: {"27":{"platforms":["Instagram"]}, ...} keyed by form id.`;
+  try{const res=await S.sample.json(prompt,{modelTier:"default"});let n=0;
+    S.routes.forEach(r=>{const got=res&&res[String(r.id)];if(!got)return;byId[r.id].fields.forEach(f=>{if(!(f.k in got)||filled(f,r.ans[f.k])&&!r.auto.has(f.k))return;let v=got[f.k];
+      if(f.type==="check"){v=(Array.isArray(v)?v:[v]).map(String).filter(x=>f.opts.includes(x));if(!v.length)return;}
+      else if(f.type==="radio"||f.type==="drop"){if(!f.opts.includes(String(v)))return;v=String(v);}
+      else if(f.type==="date"){if(!parseISO(String(v)))return;}else if(f.type==="file")return;else v=String(v);
+      r.ans[f.k]=v;r.auto.add(f.k);n++;});});
+    renderCards();$("#aiStatus").textContent=n?`Filled ${n} answer${n>1?"s":""}. Check anything marked “From your description.”`:"Nothing more to fill from the description.";
+  }catch(e){$("#aiStatus").textContent=e&&e.code==="not_granted"?"Claude isn't allowed on this page.":"Claude didn't respond. Fill the rest in by hand.";}
+  b.disabled=false;
+}
+
+/* ---------- navigation ---------- */
+function msg(h,html){const m=$("#msg");if(html)m.innerHTML=h;else m.textContent=h;}
+function invalid(el,bad){el.classList.toggle("invalid",bad);return bad;}
+function validate(n){
+  const s=sh();
+  if(n===0){let bad=false;bad=invalid($("#r_name"),!s.name)||bad;bad=invalid($("#r_email"),!CONFIG.emailDomains.some(d=>s.email.toLowerCase().endsWith("@"+d))||!/^[^@\s]+@[^@\s]+$/.test(s.email))||bad;bad=invalid($("#r_dept"),!s.dept)||bad;if(bad){msg("Fill in your name, your @caesars.com or @harrahs.com email, and your department.");return false;}
+    if($("#remember").checked){["r_name","r_email","r_dept","r_approver"].forEach(k=>store.set("hrsc_cr_"+k,$("#"+k).value));}else["r_name","r_email","r_dept","r_approver"].forEach(k=>store.del("hrsc_cr_"+k));}
+  if(n===1&&!S.tiles.size){msg("Pick at least one, or choose “Not sure”.");return false;}
+  if(n===2){let bad=false;bad=invalid($("#r_project"),!s.project)||bad;bad=invalid($("#r_live"),!s.live)||bad;bad=invalid($("#desc"),(s.desc.match(/\S+/g)||[]).length<8)||bad;if(bad){msg("Add a project name, a live date and a sentence or two about what you need.");return false;}}
+  msg("");return true;
+}
+function go(n){
+  S.step=n;document.querySelectorAll("section.step").forEach(sec=>sec.hidden=+sec.dataset.step!==n);
+  document.querySelectorAll("#rail li").forEach((li,i)=>{li.classList.toggle("on",i===Math.min(n,4));li.classList.toggle("done",i<n);});
+  $("#backBtn").hidden=n===0||n>=5;$(".actions").hidden=n>=5;
+  $("#nextBtn").textContent=n===4?"Send request":"Next";
+  if(n===2){liveHint();renderSuggest();}
+  if(n===3){syncRoutes();renderCards();$("#aiFill").hidden=!S.sample;}
+  if(n===4)renderReview();
+  if(n===6){$(".actions").hidden=true;}
+  window.scrollTo({top:0,behavior:"auto"});
+  saveDraft();
+}
+function saveDraft(){store.set("hrsc_cr_draft",JSON.stringify({p:$("#r_project").value,l:$("#r_live").value,a:$("#r_aud").value,d:$("#desc").value,g:$("#g_goal").value,s:$("#g_succ").value,t:[...S.tiles],f:[...S.files]}));}
+function loadDraft(){try{const d=JSON.parse(store.get("hrsc_cr_draft")||"null");if(!d)return;$("#r_project").value=d.p||"";$("#r_live").value=d.l||"";$("#r_aud").value=d.a||"";$("#desc").value=d.d||"";$("#g_goal").value=d.g||"";$("#g_succ").value=d.s||"";S.tiles=new Set(d.t||[]);S.files=new Set(d.f||[]);}catch(e){}}
+
+$("#nextBtn").addEventListener("click",()=>{if(S.step===4){send();return;}if(validate(S.step))go(S.step+1);});
+$("#backBtn").addEventListener("click",()=>go(Math.max(0,S.step-1)));
+$("#copyBack").addEventListener("click",()=>{$(".actions").hidden=false;go(4);});
+$("#newReq").addEventListener("click",()=>{["r_project","r_live","desc","g_goal","g_succ"].forEach(k=>$("#"+k).value="");$("#r_aud").value="";S.tiles.clear();S.files.clear();S.routes=[];renderTiles();renderFiles();onDesc();$(".actions").hidden=false;go(1);});
+$("#exampleBtn").addEventListener("click",()=>{$("#r_project").value=EXAMPLE.project;$("#r_aud").value=EXAMPLE.aud;$("#desc").value=EXAMPLE.desc;$("#g_goal").value=EXAMPLE.goal;$("#r_live").value=iso(addDays(22));EXAMPLE.tiles.forEach(t=>S.tiles.add(t));EXAMPLE.files.forEach(f=>S.files.add(f));renderTiles();renderFiles();onDesc();liveHint();});
+$("#desc").addEventListener("input",()=>{onDesc();saveDraft();});
+$("#r_live").addEventListener("input",liveHint);
+["r_project","g_goal","g_succ","r_aud"].forEach(k=>$("#"+k).addEventListener("input",saveDraft));
+$("#aiFill").addEventListener("click",aiFill);
+
+["r_name","r_email","r_dept","r_approver"].forEach(k=>{const v=store.get("hrsc_cr_"+k);if(v)$("#"+k).value=v;});
+loadDraft();
+(function resume(){let ref=null;try{ref=new URLSearchParams(location.search).get("ref");}catch(e){}
+  if(!ref||!/^REQ-[0-9A-Z-]+$/.test(ref))return;S.updateOf=ref;const b=$("#updBanner");b.hidden=false;
+  let snap=null;try{snap=JSON.parse(store.get("hrsc_cr_sent_"+ref)||"null");}catch(e){}
+  if(snap&&snap.draft){store.set("hrsc_cr_draft",snap.draft);loadDraft();S.routes=(snap.routes||[]).filter(r=>byId[r.id]).map(r=>({id:r.id,ans:r.ans||{},auto:new Set()}));
+    b.textContent=`You're updating request ${ref}. Your earlier answers are loaded. Fill in what we asked about and send it again.`;}
+  else b.textContent=`You're updating request ${ref}. We couldn't find your earlier answers on this device, so please fill the form in again. We'll attach it to ${ref}.`;})();
+renderTiles();renderStems();renderFiles();onDesc();go(0);
+(async()=>{try{const s=window.claude&&await window.claude.use("sample");if(s)S.sample=s;if(S.step===3)$("#aiFill").hidden=!S.sample;}catch(e){}})();
+})();
+</script>
+
+</body></html>
