@@ -677,8 +677,9 @@ function buildPayload(ref){
       description:`${s.desc}${others.length?"\n\nRelated requests: "+others.join("; "):""}`};});
   const allMissing=[...new Set([...briefs.flatMap(b=>b.missing.map(m=>`${plainName(b.template_id)}: ${m}`)),...(briefs.length?score(S.routes[0]).soft:[])])];
   const tok=S.token||(S.token=makeToken());
-  const ask=briefs.map((b,i)=>b.missing_keys.length?{t:b.template_id,n:b.brief_name,p:plainName(S.routes[i].id),h:b.readiness<CONFIG.holdBelow?1:0,m:b.missing_keys,c:ctxOf(S.routes[i])}:null).filter(Boolean);
-  const answerLink=ask.length?`${CONFIG.siteUrl||(location.origin+location.pathname)}?answer=${encodeURIComponent(ref)}#${b64e(JSON.stringify({v:1,r:ref,k:tok,b:ask}))}`:"";
+  const sharedAsk=[...(!s.goal?["goal"]:[]),...(!s.success?["success"]:[]),...(!s.aud?["aud"]:[])];
+  const ask=briefs.map((b,i)=>(b.missing_keys.length||sharedAsk.length)?{t:b.template_id,n:b.brief_name,p:plainName(S.routes[i].id),h:b.readiness<CONFIG.holdBelow?1:0,m:b.missing_keys,c:ctxOf(S.routes[i])}:null).filter(Boolean);
+  const answerLink=ask.length?`${CONFIG.siteUrl||(location.origin+location.pathname)}?answer=${encodeURIComponent(ref)}#${b64e(JSON.stringify({v:1,r:ref,k:tok,b:ask,s:sharedAsk}))}`:"";
   return{ref,answer_token:tok,answer_link:answerLink,update_of:S.updateOf||null,hold_below:CONFIG.holdBelow,submitted_at:new Date().toISOString(),source:"hrsc-creative-request v3",
     requester:{name:s.name,email:s.email,department:s.dept,approver:s.approver||s.name},
     project:{name:s.project,live_date:s.live?usDate(s.live):"",live_date_iso:s.live,audience:s.aud,goal:s.goal,success_measure:s.success,description:s.desc,files_coming:[...S.files]},
@@ -757,11 +758,24 @@ function ansNeeded(r){const t=byId[r.id],a=effAnswers(r);
 function renderAnswer(){const box=$("#ansCards");box.innerHTML="";
   S.routes.forEach((r,i)=>{const t=byId[r.id],a=effAnswers(r);const el=document.createElement("div");el.className="card";el.dataset.i=i;r.shown=ansNeeded(r);
     el.innerHTML=`<div class="card-head"><strong>${esc(r.plain)}</strong></div><div class="card-body">${r.held?'<div class="note warn">This part is on hold until you answer these.</div>':'<div class="note">This part is already with the team. Your answers get added to it.</div>'}<div class="qs need-qs"></div></div>`;
-    r.shown.forEach(k=>el.querySelector(".need-qs").append(question(r,t.fields.find(f=>f.k===k),a)));box.append(el);});
+    r.shown.forEach(k=>el.querySelector(".need-qs").append(question(r,t.fields.find(f=>f.k===k),a)));if(r.shown.length)box.append(el);});
+  const sc=sharedCard();if(sc)box.append(sc);
   refreshAnswer(true);}
+const SH_DEFS={goal:["What's the goal?","Goal"],success:["How will you know it worked?","Success measure"],aud:["Who is it for?","Audience"]};
+function sharedCard(){const ask=((S.ans&&S.ans.s)||[]).filter(k=>SH_DEFS[k]);if(!ask.length)return null;S.shared=S.shared||{};
+  const el=document.createElement("div");el.className="card";
+  el.innerHTML=`<div class="card-head"><strong>About the project</strong></div><div class="card-body"><div class="note">Optional. It covers every part of your request and helps us aim the work.</div><div class="qs"></div></div>`;
+  ask.forEach(k=>{const q=document.createElement("div");q.className="q";const id="sh_"+k;
+    const lab=document.createElement("label");lab.htmlFor=id;lab.textContent=SH_DEFS[k][0];
+    let inp;if(k==="aud"){inp=document.createElement("select");["","Guests","Team Members","Guests and Team Members"].forEach(o=>{const op=document.createElement("option");op.value=o;op.textContent=o||"Choose…";inp.append(op);});}
+    else inp=document.createElement("textarea");
+    inp.id=id;inp.value=S.shared[k]||"";q.classList.toggle("done",!!S.shared[k]);
+    inp.addEventListener("input",()=>{S.shared[k]=inp.value.trim();q.classList.toggle("done",!!S.shared[k]);});
+    q.append(lab,inp);el.querySelector(".qs").append(q);});
+  return el;}
 function ansLeft(){let n=0;S.routes.forEach(r=>{const a=effAnswers(r);ansNeeded(r).forEach(k=>{if(!filled(byId[r.id].fields.find(f=>f.k===k),a[k]))n++;});});return n;}
 function refreshAnswer(first){let changed=false;
-  document.querySelectorAll("#ansCards .card").forEach(el=>{const r=S.routes[+el.dataset.i];const now=ansNeeded(r);if(!first&&now.join()!==r.shown.join()){changed=true;return;}
+  document.querySelectorAll("#ansCards .card[data-i]").forEach(el=>{const r=S.routes[+el.dataset.i];const now=ansNeeded(r);if(!first&&now.join()!==r.shown.join()){changed=true;return;}
     const a=effAnswers(r);now.forEach(k=>{const f=byId[r.id].fields.find(x=>x.k===k),q=el.querySelector(`.q[data-k="${k}"]`),ok=filled(f,a[k]);if(q){q.classList.toggle("need",!ok);q.classList.toggle("done",ok);}});});
   if(changed){setTimeout(renderAnswer,0);return;}
   const n=ansLeft();msg(n?`${n} to go`:"All set. Send your answers.");}
@@ -780,9 +794,11 @@ function startAnswer(){let ref=null;try{ref=new URLSearchParams(location.search)
 async function sendAnswers(){
   const n=ansLeft();if(n){msg(`Answer the ${n} question${n>1?"s":""} still marked in pink.`);document.querySelector("#ansCards .q.need")?.scrollIntoView({block:"center"});return;}
   const ref=S.ans.r;
+  const shared=Object.keys(SH_DEFS).filter(k=>(S.ans.s||[]).includes(k)&&(S.shared||{})[k]).map(k=>({question:SH_DEFS[k][1],answer:S.shared[k]}));
   const payload={kind:"answers",ref,answer_token:S.ans.k,submitted_at:new Date().toISOString(),source:"hrsc-creative-request v3 answers",
-    briefs:S.routes.map(r=>{const t=byId[r.id],a=effAnswers(r);const ans=ansNeeded(r).map(k=>{const f=t.fields.find(x=>x.k===k);return{question:f.label,answer:fmt(f,a[k],a)};});
-      return{brief_name:r.name,template_id:t.id,template_name:t.name,was_held:r.held,answers:ans,answers_text:ans.map(x=>`${x.question}: ${x.answer}`).join("\n")};})};
+    briefs:S.routes.map(r=>{const t=byId[r.id],a=effAnswers(r);const ans=ansNeeded(r).map(k=>{const f=t.fields.find(x=>x.k===k);return{question:f.label,answer:fmt(f,a[k],a)};}).concat(shared);
+      return{brief_name:r.name,template_id:t.id,template_name:t.name,was_held:r.held,answers:ans,answers_text:ans.map(x=>`${x.question}: ${x.answer}`).join("\n")};}).filter(b=>b.answers.length)};
+  if(!payload.briefs.length){msg("Add at least one answer before sending.");return;}
   const text=`Answers for ${ref}\n\n`+payload.briefs.map(b=>`${b.brief_name}\n${b.answers_text}`).join("\n\n");
   const fail=why=>{$("#ansBadNote").innerHTML=`${esc(why)} Copy your answers below and email them to <a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a>.`;const pre=document.createElement("pre");pre.textContent=text;$("#ansBadNote").after(pre);$("#h9").textContent="Copy your answers";showAns(9);};
   if(!CONFIG.answerUrl){fail("Sending isn't switched on for this copy of the form.");return;}
