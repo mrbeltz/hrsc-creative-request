@@ -474,6 +474,10 @@ const EXAMPLE={project:"Spiked Fall Cocktail Menu",aud:"Guests",goal:"Drive visi
 
 const S={startedAt:Date.now(),step:0,tiles:new Set(),files:new Set(),routes:[],sample:null,sent:null};
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+/* Blank slate: a link with ?fresh=1 forgets everything this browser saved (remembered details, draft, GL#), then drops the flag so a refresh keeps new work. */
+(function(){try{const u=new URL(location.href);if(!u.searchParams.has("fresh"))return;
+  Object.keys(localStorage).filter(k=>k.indexOf("hrsc_cr_")===0).forEach(k=>localStorage.removeItem(k));
+  u.searchParams.delete("fresh");history.replaceState(null,"",u.pathname+u.search+u.hash);}catch(e){}})();
 
 /* ---------- dates ---------- */
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
