@@ -223,6 +223,23 @@ button.link{font:600 14px/1 var(--body);background:none;border:0;color:var(--bra
   </section>
 </div>
 
+<div class="wrap" id="ansWrap" style="margin-top:20px" hidden>
+  <section class="step" data-step="7" aria-labelledby="h7">
+    <h2 id="h7">A few quick answers</h2>
+    <p class="sub" id="ansSub"></p>
+    <div id="ansCards" class="qs"></div>
+  </section>
+  <section class="step done-panel" data-step="8" hidden aria-labelledby="h8">
+    <h2 id="h8">Thanks, that's everything</h2>
+    <p style="margin:0" id="ansDoneNote"></p>
+    <span class="ref" id="ansRef"></span>
+  </section>
+  <section class="step" data-step="9" hidden aria-labelledby="h9">
+    <h2 id="h9">This link isn't complete</h2>
+    <p style="margin:0" id="ansBadNote"></p>
+  </section>
+</div>
+
 <div class="actions"><div class="in">
   <button class="ghost" id="backBtn" type="button" hidden>Back</button>
   <span class="msg" id="msg"></span>
@@ -236,7 +253,9 @@ const CONFIG={
   fileUploadUrl:"",       // Dropbox file request (or similar) link for attachments
   contactEmail:"jbeltz@caesars.com",
   emailDomains:["caesars.com","harrahs.com"],
-  holdBelow:60            // requests scoring under this wait for answers before they go into FunctionPoint
+  holdBelow:60,           // requests scoring under this wait for answers before they go into FunctionPoint
+  answerUrl:"https://hooks.zapier.com/hooks/catch/29085885/41oojzg/",           // Zapier "Catch Hook" URL for the answer-only page (Zap 2)
+  siteUrl:"https://mrbeltz.github.io/hrsc-creative-request/"  // where this page is hosted; used to build answer links
 };
 (function(){
 "use strict";
@@ -574,6 +593,7 @@ function score(r){
 }
 const plain=t=>{if(t.id===13){const p=S.tiles.has(131),v=S.tiles.has(132);return p&&v?"Photo & video coverage":v?"Video coverage":"Photography";}const tl=TILES.find(x=>x[0]===t.id);return tl?tl[1]:t.name;};
 function renderCards(){
+  if(S.ans)return renderAnswer();
   const box=$("#cards");box.innerHTML="";
   S.routes.forEach((r,i)=>{
     const t=byId[r.id],a=effAnswers(r);const el=document.createElement("div");el.className="card";el.dataset.i=i;
@@ -620,6 +640,7 @@ function question(r,f,a){
   return q;
 }
 function refresh(){
+  if(S.ans)return refreshAnswer();
   document.querySelectorAll("#cards .card").forEach(el=>{const r=S.routes[+el.dataset.i];if(!r)return;const s=score(r),t=byId[r.id];
     const bar=el.querySelector(".bar i");bar.style.width=s.v+"%";bar.style.background=s.band==="ready"?"var(--ok)":s.band==="info"?"var(--warn)":"var(--bad)";el.querySelector(".meter b").textContent=s.v+"%";
     const fl=el.querySelector(".flags");fl.hidden=!s.flags.length;fl.textContent=s.flags.join(" ");
@@ -652,16 +673,25 @@ function buildPayload(ref){
     const text=head.concat(answers.map(x=>`${x.question}: ${x.answer}`)).join("\n");
     return{template_id:t.id,template_name:t.name,brief_name:names[i],ae:t.ae||"JB",delivery_date:sc.live?usDate(sc.live):"",delivery_date_iso:sc.live||"",
       readiness:sc.v,readiness_band:sc.bandText,rush:!sc.leadOk&&!!sc.live,lead_days:sc.lead?sc.lead.days:null,lead_min_days:t.min,
-      flags:sc.flags,missing:sc.missing.map(f=>f.label),answers,answers_text:answers.map(x=>`${x.question}: ${x.answer}`).join("\n"),brief_text:text,
+      flags:sc.flags,missing:sc.missing.map(f=>f.label),missing_keys:sc.missing.map(f=>f.k),answers,answers_text:answers.map(x=>`${x.question}: ${x.answer}`).join("\n"),brief_text:text,
       description:`${s.desc}${others.length?"\n\nRelated requests: "+others.join("; "):""}`};});
   const allMissing=[...new Set([...briefs.flatMap(b=>b.missing.map(m=>`${plainName(b.template_id)}: ${m}`)),...(briefs.length?score(S.routes[0]).soft:[])])];
-  return{ref,update_of:S.updateOf||null,hold_below:CONFIG.holdBelow,submitted_at:new Date().toISOString(),source:"hrsc-creative-request v3",
+  const tok=S.token||(S.token=makeToken());
+  const ask=briefs.map((b,i)=>b.missing_keys.length?{t:b.template_id,n:b.brief_name,p:plainName(S.routes[i].id),h:b.readiness<CONFIG.holdBelow?1:0,m:b.missing_keys,c:ctxOf(S.routes[i])}:null).filter(Boolean);
+  const answerLink=ask.length?`${CONFIG.siteUrl||(location.origin+location.pathname)}?answer=${encodeURIComponent(ref)}#${b64e(JSON.stringify({v:1,r:ref,k:tok,b:ask}))}`:"";
+  return{ref,answer_token:tok,answer_link:answerLink,update_of:S.updateOf||null,hold_below:CONFIG.holdBelow,submitted_at:new Date().toISOString(),source:"hrsc-creative-request v3",
     requester:{name:s.name,email:s.email,department:s.dept,approver:s.approver||s.name},
     project:{name:s.project,live_date:s.live?usDate(s.live):"",live_date_iso:s.live,audience:s.aud,goal:s.goal,success_measure:s.success,description:s.desc,files_coming:[...S.files]},
     brief_count:briefs.length,lowest_readiness:Math.min(...briefs.map(b=>b.readiness)),any_rush:briefs.some(b=>b.rush),
     briefs,all_missing:allMissing,summary_text:briefs.map(b=>b.brief_text).join("\n\n────────\n\n")};
 }
 const plainName=id=>plain(byId[id]);
+const CTX_KEYS=["outlet","areas","offer","versions","use","need","support","digital","size","assets"];
+function ctxOf(r){const t=byId[r.id],a=effAnswers(r),c={};CTX_KEYS.forEach(k=>{if(t.fields.some(f=>f.k===k)&&filled({},a[k]))c[k]=a[k];});
+  const had=t.fields.filter(f=>f.critIf&&filled(f,a[f.k])).map(f=>f.k);if(had.length)c._f=had;return c;}
+function makeToken(){const a=new Uint8Array(9);try{crypto.getRandomValues(a);}catch(e){for(let i=0;i<9;i++)a[i]=Math.random()*256|0;}return [...a].map(x=>x.toString(36).padStart(2,"0")).join("").slice(0,14);}
+function b64e(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
+function b64d(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return decodeURIComponent(escape(atob(s)));}
 function makeRef(){const d=new Date();return "REQ-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Math.random().toString(36).slice(2,6).toUpperCase();}
 
 /* ---------- review ---------- */
@@ -719,6 +749,54 @@ async function aiFill(){
   b.disabled=false;
 }
 
+
+/* ---------- answer-only mode: opened from the link in the follow-up email ---------- */
+const same=(x,y)=>JSON.stringify(x??null)===JSON.stringify(y??null);
+function ansNeeded(r){const t=byId[r.id],a=effAnswers(r);
+  return t.fields.filter(f=>r.ask.includes(f.k)||(f.critIf&&isCrit(f,a)&&(!same(r.ans[f.k],r.ctx[f.k])||!(filled(f,a[f.k])||r.had.includes(f.k))))).map(f=>f.k);}
+function renderAnswer(){const box=$("#ansCards");box.innerHTML="";
+  S.routes.forEach((r,i)=>{const t=byId[r.id],a=effAnswers(r);const el=document.createElement("div");el.className="card";el.dataset.i=i;r.shown=ansNeeded(r);
+    el.innerHTML=`<div class="card-head"><strong>${esc(r.plain)}</strong></div><div class="card-body">${r.held?'<div class="note warn">This part is on hold until you answer these.</div>':'<div class="note">This part is already with the team. Your answers get added to it.</div>'}<div class="qs need-qs"></div></div>`;
+    r.shown.forEach(k=>el.querySelector(".need-qs").append(question(r,t.fields.find(f=>f.k===k),a)));box.append(el);});
+  refreshAnswer(true);}
+function ansLeft(){let n=0;S.routes.forEach(r=>{const a=effAnswers(r);ansNeeded(r).forEach(k=>{if(!filled(byId[r.id].fields.find(f=>f.k===k),a[k]))n++;});});return n;}
+function refreshAnswer(first){let changed=false;
+  document.querySelectorAll("#ansCards .card").forEach(el=>{const r=S.routes[+el.dataset.i];const now=ansNeeded(r);if(!first&&now.join()!==r.shown.join()){changed=true;return;}
+    const a=effAnswers(r);now.forEach(k=>{const f=byId[r.id].fields.find(x=>x.k===k),q=el.querySelector(`.q[data-k="${k}"]`),ok=filled(f,a[k]);if(q){q.classList.toggle("need",!ok);q.classList.toggle("done",ok);}});});
+  if(changed){setTimeout(renderAnswer,0);return;}
+  const n=ansLeft();msg(n?`${n} to go`:"All set. Send your answers.");}
+function showAns(n){document.querySelectorAll("#ansWrap section.step").forEach(s=>s.hidden=+s.dataset.step!==n);$(".actions").hidden=n!==7;window.scrollTo({top:0,behavior:"auto"});}
+function startAnswer(){let ref=null;try{ref=new URLSearchParams(location.search).get("answer");}catch(e){}
+  if(!ref)return false;S.ans={};
+  document.querySelectorAll(".wrap:not(#ansWrap) section.step").forEach(s=>s.hidden=true);$(".rail").hidden=true;$("#ansWrap").hidden=false;$("#backBtn").hidden=true;
+  $(".lede").textContent="Your request is almost ready. Answer what's below and we'll take it from there.";
+  let d=null;try{d=JSON.parse(b64d(location.hash.slice(1)));}catch(e){}
+  if(!d||d.r!==ref||!d.k||!Array.isArray(d.b)||!d.b.some(b=>byId[b.t])){
+    $("#ansBadNote").innerHTML=`Open the link straight from your email, without editing it. If it still doesn't work, reply to that email or write to <a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a> and mention ${esc(ref)}.`;showAns(9);return true;}
+  S.ans=d;S.routes=d.b.filter(b=>byId[b.t]).map(b=>{const c={...(b.c||{})},had=c._f||[];delete c._f;
+    return{id:b.t,name:b.n,plain:b.p||byId[b.t].name,held:!!b.h,ask:b.m||[],had,ctx:c,ans:JSON.parse(JSON.stringify(c)),auto:new Set()};});
+  $("#ansSub").textContent=`Request ${ref}. ${S.routes.length>1?"Each card is one part of your request. ":""}It takes about a minute.`;
+  $("#nextBtn").textContent="Send answers";renderAnswer();showAns(7);return true;}
+async function sendAnswers(){
+  const n=ansLeft();if(n){msg(`Answer the ${n} question${n>1?"s":""} still marked in pink.`);document.querySelector("#ansCards .q.need")?.scrollIntoView({block:"center"});return;}
+  const ref=S.ans.r;
+  const payload={kind:"answers",ref,answer_token:S.ans.k,submitted_at:new Date().toISOString(),source:"hrsc-creative-request v3 answers",
+    briefs:S.routes.map(r=>{const t=byId[r.id],a=effAnswers(r);const ans=ansNeeded(r).map(k=>{const f=t.fields.find(x=>x.k===k);return{question:f.label,answer:fmt(f,a[k],a)};});
+      return{brief_name:r.name,template_id:t.id,template_name:t.name,was_held:r.held,answers:ans,answers_text:ans.map(x=>`${x.question}: ${x.answer}`).join("\n")};})};
+  const text=`Answers for ${ref}\n\n`+payload.briefs.map(b=>`${b.brief_name}\n${b.answers_text}`).join("\n\n");
+  const fail=why=>{$("#ansBadNote").innerHTML=`${esc(why)} Copy your answers below and email them to <a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a>.`;const pre=document.createElement("pre");pre.textContent=text;$("#ansBadNote").after(pre);$("#h9").textContent="Copy your answers";showAns(9);};
+  if(!CONFIG.answerUrl){fail("Sending isn't switched on for this copy of the form.");return;}
+  const btn=$("#nextBtn");btn.disabled=true;msg('<span class="dots">Sending</span>',true);
+  const body=JSON.stringify(payload);let ok=false;
+  try{const res=await fetch(CONFIG.answerUrl,{method:"POST",body});ok=res.ok;}
+  catch(e){try{await fetch(CONFIG.answerUrl,{method:"POST",body,mode:"no-cors"});ok=true;}catch(e2){ok=false;}}
+  btn.disabled=false;msg("");
+  if(!ok){fail("We couldn't reach the Advertising inbox.");return;}
+  $("#ansRef").textContent=ref;
+  const held=S.routes.filter(r=>r.held).length;
+  $("#ansDoneNote").textContent=held?"Your request is now complete and goes into the team's queue, usually within 15 minutes. You'll hear from Advertising within 2 business days.":"We've added your answers to your request. You'll hear from Advertising within 2 business days.";
+  showAns(8);}
+
 /* ---------- navigation ---------- */
 function msg(h,html){const m=$("#msg");if(html)m.innerHTML=h;else m.textContent=h;}
 function invalid(el,bad){el.classList.toggle("invalid",bad);return bad;}
@@ -745,7 +823,7 @@ function go(n){
 function saveDraft(){store.set("hrsc_cr_draft",JSON.stringify({p:$("#r_project").value,l:$("#r_live").value,a:$("#r_aud").value,d:$("#desc").value,g:$("#g_goal").value,s:$("#g_succ").value,t:[...S.tiles],f:[...S.files]}));}
 function loadDraft(){try{const d=JSON.parse(store.get("hrsc_cr_draft")||"null");if(!d)return;$("#r_project").value=d.p||"";$("#r_live").value=d.l||"";$("#r_aud").value=d.a||"";$("#desc").value=d.d||"";$("#g_goal").value=d.g||"";$("#g_succ").value=d.s||"";S.tiles=new Set(d.t||[]);S.files=new Set(d.f||[]);}catch(e){}}
 
-$("#nextBtn").addEventListener("click",()=>{if(S.step===4){send();return;}if(validate(S.step))go(S.step+1);});
+$("#nextBtn").addEventListener("click",()=>{if(S.ans){if(S.ans.r)sendAnswers();return;}if(S.step===4){send();return;}if(validate(S.step))go(S.step+1);});
 $("#backBtn").addEventListener("click",()=>go(Math.max(0,S.step-1)));
 $("#copyBack").addEventListener("click",()=>{$(".actions").hidden=false;go(4);});
 $("#newReq").addEventListener("click",()=>{["r_project","r_live","desc","g_goal","g_succ"].forEach(k=>$("#"+k).value="");$("#r_aud").value="";S.tiles.clear();S.files.clear();S.routes=[];renderTiles();renderFiles();onDesc();$(".actions").hidden=false;go(1);});
@@ -763,7 +841,7 @@ loadDraft();
   if(snap&&snap.draft){store.set("hrsc_cr_draft",snap.draft);loadDraft();S.routes=(snap.routes||[]).filter(r=>byId[r.id]).map(r=>({id:r.id,ans:r.ans||{},auto:new Set()}));
     b.textContent=`You're updating request ${ref}. Your earlier answers are loaded. Fill in what we asked about and send it again.`;}
   else b.textContent=`You're updating request ${ref}. We couldn't find your earlier answers on this device, so please fill the form in again. We'll attach it to ${ref}.`;})();
-renderTiles();renderStems();renderFiles();onDesc();go(0);
+if(!startAnswer()){renderTiles();renderStems();renderFiles();onDesc();go(0);}
 (async()=>{try{const s=window.claude&&await window.claude.use("sample");if(s)S.sample=s;if(S.step===3)$("#aiFill").hidden=!S.sample;}catch(e){}})();
 })();
 </script>
