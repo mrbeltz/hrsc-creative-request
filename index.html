@@ -140,9 +140,11 @@ button.link{font:600 14px/1 var(--body);background:none;border:0;color:var(--bra
       <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"><label for="r_website">Leave this empty</label><input type="text" id="r_website" tabindex="-1" autocomplete="off"></div>
       <div class="field"><label class="req" for="r_dept">Department</label>
         <select id="r_dept"><option value="">Choose…</option>
-          <option>Casino Marketing</option><option>Player Development</option><option>Food &amp; Beverage</option><option>Hotel</option>
-          <option>Entertainment &amp; Events</option><option>Public Relations &amp; Sponsorships</option><option>Human Resources / Team Members</option>
-          <option>Retail</option><option>Spa &amp; Pool</option><option>Advertising</option><option>Other</option></select></div>
+          <option>Advertising</option><option>Caesars Rewards</option><option>Casino Marketing</option><option>Direct Marketing</option>
+          <option>Entertainment &amp; Events</option><option>Food &amp; Beverage</option><option>Group Sales</option><option>Hotel</option>
+          <option>Human Resources / Team Members</option><option>Internal Communications</option><option>People &amp; Culture</option>
+          <option>Player Development</option><option>Promotions &amp; Events</option><option>Public Relations &amp; Sponsorships</option>
+          <option>Retail</option><option>Security</option><option>Spa &amp; Pool</option><option>Other</option></select></div>
       <div class="field"><label for="r_approver">Who gives final approval?</label><input type="text" id="r_approver" placeholder="Name, if not you"><span class="hint">Leave blank if it's you.</span></div>
     </div>
     <label class="hint" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="remember" checked> Remember me on this device</label>
@@ -317,7 +319,7 @@ const T=[
      ["assetDue","Asset Delivery Due Date","date",0],
      ["url","URL / Placement Location","text",1],
      ["notes","Special Notes for Web Build","para",0]]},
- {id:9,name:"Email Blast",code:"Eml",ae:"RL",min:14,live:null,
+ {id:9,name:"Email Blast",code:"Email",ae:"RL",min:14,live:null,
   use:"A corporate email blast",
   kw:["email","e-mail","eblast","e-blast","newsletter"],
   f:[["desc","PROJECT DESCRIPTION","para",1,null,"What is the final product and where will it be used?"],
@@ -376,7 +378,7 @@ const T=[
      ["qrUrl","If new QR code is needed, please provide a URL of where this QR will be linked.","url",0,null,null,a=>a.qr==="New QR code needed"],
      ["disc","Please provide disclaimer","drop",0,["FOOD DISCLAIMER","DRINK DISCLAIMER"]],
      ["discOther","If other, please specify?","para",0]]},
- {id:24,name:"Hotel Package Request",code:"Hotel",ae:"RL",min:21,live:null,
+ {id:24,name:"Hotel Package Request",code:"Mkt",ae:"RL",min:21,live:null,
   use:"A hotel package offer and the marketing that supports it",
   kw:["hotel package","room package","stay package","booking code","nights","staycation"],
   f:[["support","What type of Marketing Support did you have in mind?","check",1,["Website","Print collateral","Animations (casino floor)","In room channel","Video","Social Media"]],
@@ -628,8 +630,16 @@ function refresh(){
 }
 
 /* ---------- payload ---------- */
-const yy=()=>String(new Date().getFullYear()).slice(2);
-const briefName=t=>`Adv_${t.code}-${yy()}_${sh().project||"Untitled"}`;
+/* FP name: [Dept]_[Type]-[YY]_[Name]. Zapier rebuilds it with the same rules (see ZAPIER_BRIEF_NAMING.md), so keep the two in step. */
+const DEPT_PREFIX={"Advertising":"Adv","Caesars Rewards":"CR","Casino Marketing":"CM","Direct Marketing":"DM","Entertainment & Events":"Ent","Food & Beverage":"F&B","Group Sales":"GS","Hotel":"Hotel",
+  "Human Resources / Team Members":"HR","Internal Communications":"ICOM","People & Culture":"TD","Player Development":"Promo","Promotions & Events":"Promo","Public Relations & Sponsorships":"PR",
+  "Retail":"RTL","Security":"SEC","Spa & Pool":"Spa","Other":"Adv"};
+const ADV_ONLY=[17,27,33],DIVE_DEPTS=["Food & Beverage","Spa & Pool"],DIVE_WORDS=/\b(dive|pool|cabanas?|snack shack)\b/i;
+const yy=()=>String(/^\d{4}/.test(sh().live||"")?sh().live.slice(0,4):new Date().getFullYear()).slice(2);
+const briefName=t=>{const s=sh(),name=(s.project||"Untitled").replace(/_/g," ").replace(/\s+/g," ").trim();
+  let pre=ADV_ONLY.includes(t.id)?"Adv":(DEPT_PREFIX[s.dept]||"Adv");
+  if(!ADV_ONLY.includes(t.id)&&DIVE_DEPTS.includes(s.dept)&&DIVE_WORDS.test(name))pre="Dive";
+  return `${pre}_${t.code}-${yy()}_${name}`;};
 const fmt=(f,v,a)=>{if(f.fp)v=Array.isArray(v)?v.map(x=>f.fp(x,a||{})):f.fp(v,a||{});if(f.type==="time"&&/^\d{2}:\d{2}/.test(v)){const [H,M]=v.split(":").map(Number);v=`${(H%12)||12}:${String(M).padStart(2,"0")} ${H<12?"AM":"PM"}`;}return Array.isArray(v)?v.join(", "):f.type==="date"?usDate(v):String(v);};
 function buildPayload(ref){
   const s=sh();const names=S.routes.map(r=>briefName(byId[r.id]));
