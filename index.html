@@ -671,7 +671,7 @@ function buildPayload(ref){
       `Requested by: ${s.name} (${s.dept}) · ${s.email}`,`Approver: ${s.approver||s.name+" (submitter)"}`,`Audience: ${s.aud||"MISSING"}`,`Goal: ${s.goal||"MISSING"}`,`Success measure: ${s.success||"MISSING"}`,
       S.files.size?`Files coming: ${[...S.files].join(", ")}`:"",others.length?`Related requests: ${others.join("; ")}`:"","","PAGE 1"].filter((x,k,arr)=>x!==""||arr[k-1]!=="");
     const text=head.concat(answers.map(x=>`${x.question}: ${x.answer}`)).join("\n");
-    return{template_id:t.id,template_name:t.name,brief_name:names[i],ae:t.ae||"JB",delivery_date:sc.live?usDate(sc.live):"",delivery_date_iso:sc.live||"",
+    return{template_id:t.id,template_name:t.name,brief_name:names[i],ae:AE_OVERRIDE||t.ae||"JB",delivery_date:sc.live?usDate(sc.live):"",delivery_date_iso:sc.live||"",
       readiness:sc.v,readiness_band:sc.bandText,rush:!sc.leadOk&&!!sc.live,lead_days:sc.lead?sc.lead.days:null,lead_min_days:t.min,
       flags:sc.flags,missing:sc.missing.map(f=>f.label),missing_keys:sc.missing.map(f=>f.k),answers,answers_text:answers.map(x=>`${x.question}: ${x.answer}`).join("\n"),brief_text:text,
       description:`${s.desc}${others.length?"\n\nRelated requests: "+others.join("; "):""}`};});
@@ -686,6 +686,8 @@ function buildPayload(ref){
     brief_count:briefs.length,lowest_readiness:Math.min(...briefs.map(b=>b.readiness)),any_rush:briefs.some(b=>b.rush),
     briefs,all_missing:allMissing,summary_text:briefs.map(b=>b.brief_text).join("\n\n────────\n\n")};
 }
+/* Test switch: open the form with ?ae=JB to assign that AE to every brief in the submission. */
+const AE_OVERRIDE=(()=>{try{const v=(new URLSearchParams(location.search).get("ae")||"").toUpperCase();return["JB","EA","RL","JG","AL","KR","FL"].includes(v)?v:"";}catch(e){return"";}})();
 const plainName=id=>plain(byId[id]);
 const CTX_KEYS=["outlet","areas","offer","versions","use","need","support","digital","size","assets"];
 function ctxOf(r){const t=byId[r.id],a=effAnswers(r),c={};CTX_KEYS.forEach(k=>{if(t.fields.some(f=>f.k===k)&&filled({},a[k]))c[k]=a[k];});
